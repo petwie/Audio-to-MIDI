@@ -7,7 +7,7 @@ Projekt in dem wir aus einem Audio, eine MIDI Standart Datei extrahieren.
 %%{init: {'gantt': {
   'leftPadding': 170,
   'rightPadding': 10,
-  'topPadding': 70,
+  'topPadding': 90,
   'titleTopMargin': 10,
   'barHeight': 22,
   'barGap': 10,
