@@ -11,7 +11,7 @@ Projekt in dem wir aus einem Audio, eine MIDI Standart Datei extrahieren.
   'titleTopMargin': 10,
   'barHeight': 22,
   'barGap': 10,
-  'fontSize': 10,
+  'fontSize': 8,
   'sectionFontSize': 13,
   'axisFormat': '%d.%m.',
   'todayMarker': 'off'
