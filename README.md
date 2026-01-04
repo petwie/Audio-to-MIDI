@@ -5,7 +5,7 @@ Projekt in dem wir aus einem Audio, eine MIDI Standart Datei extrahieren.
 ```mermaid
 
 %%{init: {'gantt': {
-  'leftPadding': 170,
+  'leftPadding': 230,
   'rightPadding': 10,
   'topPadding': 40,
   'titleTopMargin': 10,
@@ -23,36 +23,36 @@ gantt
   axisFormat %d.%m.
   tickInterval 1d
 
-  section Infrastruktur (Ph1, PE)
+  section Infrastruktur (Ph1, Peter)
   Repo anlegen                 :a1, 2026-01-03, 2d
   .gitignore (Python)          :a2, 2026-01-03, 2d
   requirements.txt             :a3, after a2, 3d
 
-  section Testdaten (Ph1, AA)
+  section Testdaten (Ph1, Aaron)
   20 Audio-Clips               :a4, 2026-01-03, 2d
   Labels K/S/B/C               :a5, after a4, 3d
   Schlagzeitpunkte (Doku)      :a6, after a4, 3d
 
-  section Audio-Import (Ph1, AA)
+  section Audio-Import (Ph1, Aaron)
   WAV laden                    :a7, 2026-01-08, 2d
   FFT berechnen                :a8, after a7, 3d
   Plot zur Prüfung             :a9, after a7, 3d
 
-  section Spectral-Flux (Ph2, PE)
+  section Spectral-Flux (Ph2, Peter)
   Log-Magnitude                :a10, 2026-01-11, 8d
   Frame-Differenz              :a11, 2026-01-11, 8d
   Halbwellen-Gleichrichtung    :a12, 2026-01-11, 8d
 
-  section MIDI-Export (Ph2, AA)
+  section MIDI-Export (Ph2, Aaron)
   Sek → MIDI-Ticks        :a13, after a8, 2d
   MIDI schreiben               :a14, after a13, 3d
   MIDI validieren              :a15, after a14, 1d
 
-  section Peak/Schwellwert (Ph2, AA)
+  section Peak/Schwellwert (Ph2, Aaron)
   Peak-Suche                   :a16, after a15, 3d
   Adaptiver Schwellwert        :a17, after a15, 3d
 
-  section Integration & Test (Ph2, PE+AA)
+  section Integration & Test (Ph2, Peter+Aaron)
   Integration Fun.         :a18, after a17, 2d
   Funktionstests               :a19, after a18, 2d
 
