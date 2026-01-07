@@ -29,8 +29,9 @@ direction TB
         +plot_spectrogram(stft_result, sample_rate, hop_length, title="Spectrogram")
     }
 
-    AudioToMidi *-- Audioloader
-    AudioToMidi *-- BeatDetection
+    AudioToMidi *-- Loaded_AudioFIL
+    AudioToMidi *-- STFT
+    AudioToMidi *-- Beat
     AudioToMidi *-- MidiExport
     AudioToMidi *-- DrumKlassifierer
     BeatDetection *-- PeakPicking       
