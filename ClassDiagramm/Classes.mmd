@@ -1,17 +1,17 @@
 classDiagram
 direction TB
-    class Audioloader {
-
-
+    class Loaded_AudioFIL{
+        +AudioArray, sample_rate
+        +load_audio(file_path, target_sr=22050, mono=True)
     }
 
-    class BeatDetection {
+    class Beat{
     }
 
-    class PeakPicking {
+    class PeakPicking{
     }
 
-    class AudioToMidi {
+    class AudioToMidi{
       +runfile(pathToFile)
     }
 
@@ -23,8 +23,14 @@ direction TB
 
     }
 
+    class STFT{
+        +calculated_stft
+        +calculate_STFT(AudioArray, sample_rate, n_fft, hop_length)
+        +plot_spectrogram(stft_result, sample_rate, hop_length, title="Spectrogram")
+    }
+
     AudioToMidi *-- Audioloader
     AudioToMidi *-- BeatDetection
     AudioToMidi *-- MidiExport
     AudioToMidi *-- DrumKlassifierer
-    BeatDetection *-- PeakPicking
+    BeatDetection *-- PeakPicking       
