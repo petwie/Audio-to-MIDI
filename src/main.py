@@ -1,7 +1,7 @@
 import AudioImport
 
 def main():
-    AudioArray, sample_rate = AudioImport.load_audio("tests/KickLoop_Test1.m4a")
+    AudioArray, sample_rate = AudioImport.load_audio("../tests/KickLoop_Test1.m4a")
 
     calculated_stft = AudioImport.calculate_STFT(AudioArray, sample_rate,n_fft=2048, hop_length=512)
 
