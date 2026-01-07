@@ -1,0 +1,30 @@
+classDiagram
+direction TB
+    class Audioloader {
+
+
+    }
+
+    class BeatDetection {
+    }
+
+    class PeakPicking {
+    }
+
+    class AudioToMidi {
+      +runfile(pathToFile)
+    }
+
+    class MidiExport{
+
+    }
+
+    class DrumKlassifierer{
+
+    }
+
+    AudioToMidi *-- Audioloader
+    AudioToMidi *-- BeatDetection
+    AudioToMidi *-- MidiExport
+    AudioToMidi *-- DrumKlassifierer
+    BeatDetection *-- PeakPicking
