@@ -1,18 +1,30 @@
 classDiagram
+
 direction TB
-    class Loaded_AudioFIL{
+    class LoadAudioFile{
+
         +AudioArray, sample_rate
         +load_audio(file_path, target_sr=22050, mono=True)
+        
     }
 
-    class Beat{
+    class SpectralFluxCalculator{
+
+        self.calculated_FLUX = calculated_stft
+        
+        +logarithmic_Magnitude(self)
+        +calculate_spectral_flux(self)
+        +plot_spectral_flux(calculated_FLUX, title="Spectral Flux"):
+
     }
 
     class PeakPicking{
     }
 
     class AudioToMidi{
-      +runfile(pathToFile)
+        +aduio
+        +stft
+        +runfile(pathToFile)
     }
 
     class MidiExport{
@@ -23,15 +35,15 @@ direction TB
 
     }
 
-    class STFT{
+    class  LoadSTFT{
         +calculated_stft
         +calculate_STFT(AudioArray, sample_rate, n_fft, hop_length)
         +plot_spectrogram(stft_result, sample_rate, hop_length, title="Spectrogram")
     }
 
-    AudioToMidi *-- Loaded_AudioFIL
-    AudioToMidi *-- STFT
-    AudioToMidi *-- Beat
+    AudioToMidi *-- LoadAudioFile
+    AudioToMidi *-- LoadSTFT
+    AudioToMidi *-- SpectralFluxCalculator
     AudioToMidi *-- MidiExport
     AudioToMidi *-- DrumKlassifierer
-    Beat *-- PeakPicking       
+    PeakPicking -- SpectralFluxCalculator
