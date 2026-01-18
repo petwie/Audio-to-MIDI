@@ -1,7 +1,7 @@
 from LoadAudioFile import LoadAudioFile   # oder: from LoadAudioFile import LoadAudioFile
 from LoadSTFT import LoadSTFT
 from SpectralFluxCalculator import SpectralFluxCalculator
-
+from PeakPicking import PeakPicking
 
 class AudioToMidi:
 
@@ -11,7 +11,8 @@ class AudioToMidi:
         
         self.audio = LoadAudioFile(file_path)
         self.stft = LoadSTFT(n_fft=2048, hop_length=512, audio=self.audio)
-        self.flux = SpectralFluxCalculator(None)  # Placeholder for SpectralFluxCalculator instance
+        self.flux = None  # Placeholder for SpectralFluxCalculator instance
+        self.picker = None
         # Further processing steps would go here
 
     def runfile(self):
@@ -33,8 +34,12 @@ class AudioToMidi:
         self.flux.positive_part_calculate_spectral_flux()
 
         self.flux.plot_spectral_flux(self.flux.calculated_FLUX, title="Positive Spectral Flux") 
-        
 
+        picker = PeakPicking(self.flux.calculated_FLUX)
+
+        onsets = picker.find_peaks(window_size=20, delta=200, wait=10)
+        
+        picker.plot_results()
 
 
 
