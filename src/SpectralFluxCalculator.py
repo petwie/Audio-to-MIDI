@@ -7,7 +7,8 @@ class SpectralFluxCalculator:
     
     def __init__(self,calculated_stft):
         self.calculated_stft = calculated_stft
-        self.calculated_FLUX = np.zeros(self.calculated_stft.shape[1] - 1) # Initialisierung des Spektralfluss-Arrays
+        if self.calculated_stft is not None:
+            self.calculated_FLUX = np.zeros(self.calculated_stft.shape[1] - 1)
 
     def logarithmic_Magnitude(self):
         if self.calculated_stft is not None:
