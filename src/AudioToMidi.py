@@ -25,13 +25,13 @@ class AudioToMidi:
 
         self.audio.load_audio()
 
-        self.filer = Filtering(self.audio.audio_array, kick_lower_frequency=20, kick_upper_frequency=150, snare_lower_frequency=150, snare_upper_frequency=2500, hihat_lower_frequency=3000, hihat_upper_frequency=20000, sample_rate=self.audio.sample_rate)
+        self.filer = Filtering(self.audio.audio_array, kick_lower_frequency=20, kick_upper_frequency=50, snare_lower_frequency=150, snare_upper_frequency=2500, hihat_lower_frequency=3000, hihat_upper_frequency=10000, sample_rate=self.audio.sample_rate)
 
-        self.filer.load_filter("Kick")
+        self.filer.load_filter("Hihat")
 
-        self.filer.filter_for_Kick()
+        self.filer.filter_for_Hihat()
 
-        self.stft = LoadSTFT(n_fft=2048, hop_length=512, audio=self.filer.y_kick, sample_rate=self.audio.sample_rate)
+        self.stft = LoadSTFT(n_fft=2048, hop_length=512, audio=self.filer.y_hihat, sample_rate=self.audio.sample_rate)
 
         self.stft.calculate_STFT()
 

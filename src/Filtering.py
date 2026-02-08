@@ -35,11 +35,11 @@ class Filtering:
 
         elif filter_type == "Snare":
 
-            self.sos_Snare = signal.ellip(4, 0.1, 40, [self.snare_frequency_range[0] / (self.sample_rate / 2), self.snare_frequency_range[1] / (self.sample_rate / 2)], btype='bandpass', fs=self.sample_rate, output='sos')
+            self.sos_Snare = signal.ellip(4, 0.1, 40, [self.snare_frequency_range[0] / (self.sample_rate / 2), self.snare_frequency_range[1] / (self.sample_rate / 2)], btype='bandpass', output='sos')
 
         elif filter_type == "Hihat":
 
-            self.sos_Hihat = signal.ellip(4, 0.1, 40, [self.hihat_frequency_range[0] / (self.sample_rate / 2), self.hihat_frequency_range[1] / (self.sample_rate / 2)], btype='bandpass', fs=self.sample_rate, output='sos')
+            self.sos_Hihat = signal.ellip(4, 0.1, 40, [self.hihat_frequency_range[0] / (self.sample_rate / 2), self.hihat_frequency_range[1] / (self.sample_rate / 2)], btype='bandpass', output='sos')
         # Implement filter loading logic based on filter_type (e.g., "Kick", "Snare", "Hihat")
         pass
 
@@ -51,11 +51,11 @@ class Filtering:
 
 
     def filter_for_Snare(self):
-        self.y_kick = signal.sosfiltfilt(self.sos_Snare, self.audio_array)
+        self.y_snare = signal.sosfiltfilt(self.sos_Snare, self.audio_array)
         # Implement peak finding logic
         pass
 
     def filter_for_Hihat(self):
-        self.y_kick = signal.sosfiltfilt(self.sos_Hihat, self.audio_array)
+        self.y_hihat = signal.sosfiltfilt(self.sos_Hihat, self.audio_array)
         # Implement peak finding logic
         pass
