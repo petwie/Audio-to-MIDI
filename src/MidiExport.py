@@ -27,38 +27,51 @@ class MidiExport:
         # 2. Tempo setzen
         tempo_us = mido.bpm2tempo(self.bpm)
         track.append(MetaMessage('set_tempo', tempo=tempo_us))
+
+        print(f"DEBUG: Exportiere mit SR={sample_rate}, Hop={hop_length}")
         
-        # 3. Frames in Sekunden umrechnen und sortieren
+        # 1. Frames in Sekunden umrechnen
         onsets_seconds = [frame * hop_length / sample_rate for frame in onsets_frames]
         onsets_seconds.sort()
-        
-        # 4. Note-Events schreiben
-        # WICHTIG: MIDI nutzt Delta-Time (Zeit seit dem letzten Event)
-        last_event_time_ticks = 0
-        
-        # Wir definieren eine feste Notenlänge (z.B. 0.1 Sekunden)
-        note_duration_ticks = self.seconds_to_ticks(0.1)
 
-        for onset_sec in onsets_seconds:
-            # Wann passiert der Schlag in absoluten Ticks?
-            current_onset_ticks = self.seconds_to_ticks(onset_sec)
-            
-            # Wie lange müssen wir warten seit dem letzten Event?
-            delta_wait = current_onset_ticks - last_event_time_ticks
-            
-            if delta_wait < 0: delta_wait = 0
-            
-            # -- NOTE ON (Schlag beginnt) --
-            # note=36 (Kick Drum), velocity=100 (Lautstärke), channel=9 (Drums)
-            track.append(Message('note_on', note=36, velocity=100, time=delta_wait, channel=9))
-            
-            # -- NOTE OFF (Schlag endet) --
-            # Wir lassen die Note kurz klingen. Die Zeit vergeht währenddessen!
-            track.append(Message('note_off', note=36, velocity=0, time=note_duration_ticks, channel=9))
-            
-            # Update der "letzten Zeit": Wir sind jetzt bei Startzeit + Dauer
-            last_event_time_ticks = current_onset_ticks + note_duration_ticks
+        # WICHTIG: Wir brauchen absolute Ticks für alle Startzeiten
+        onset_ticks = [self.seconds_to_ticks(t) for t in onsets_seconds]
+        
+        # Standard-Länge einer Note (z.B. 0.1s)
+        max_note_duration = self.seconds_to_ticks(0.1)
+        
+        last_midi_time = 0 # Wo steht der MIDI-Cursor gerade?
 
-        # 5. Speichern
+        for i in range(len(onset_ticks)):
+            current_start = onset_ticks[i]
+            
+            # --- Schritt A: Wie lang darf diese Note sein? ---
+            # Wenn es einen nächsten Schlag gibt, darf die Note nicht länger sein als die Lücke dorthin.
+            if i < len(onset_ticks) - 1:
+                next_start = onset_ticks[i+1]
+                duration = min(max_note_duration, next_start - current_start)
+                # Sicherheitsnetz: Mindestens 1 Tick lang, sonst hört man nichts
+                if duration < 1: duration = 1
+            else:
+                # Letzte Note darf voll ausklingen
+                duration = max_note_duration
+
+            # --- Schritt B: Delta zum Start berechnen ---
+            # Wie viel Zeit vergeht vom Ende des letzten Events bis zum Start von diesem?
+            delta_on = current_start - last_midi_time
+            
+            # Sicherheitsnetz gegen negative Deltas (falls Sortierung o.ä. versagt)
+            if delta_on < 0: delta_on = 0
+            
+            # Note On schreiben
+            track.append(Message('note_on', note=36, velocity=100, time=delta_on, channel=9))
+            
+            # Note Off schreiben (Delta ist hier die Dauer der Note selbst)
+            track.append(Message('note_off', note=36, velocity=0, time=duration, channel=9))
+            
+            # --- Schritt C: Cursor aktualisieren ---
+            # Der Cursor steht jetzt bei: Startzeit + Dauer der Note
+            last_midi_time = current_start + duration
+
         mid.save(output_path)
         print(f"Fertig! {len(onsets_frames)} Noten gespeichert.")
