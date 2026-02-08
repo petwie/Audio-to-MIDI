@@ -47,8 +47,4 @@ class AudioToMidi:
 
         output_filename = self.file_path.replace(".m4a", ".mid").replace(".wav", ".mid")
 
-<<<<<<< HEAD
-        midi_writer.export_midi(onsets_frames=onsets, output_path=output_filename, sample_rate=self.audio.sample_rate, hop_length=self.stft.hop_length)
-=======
         self.midi_writer.export_midi(onsets_frames=self.onsets, output_path=output_filename, sample_rate=self.audio.sample_rate, hop_length=self.stft.hop_length)
->>>>>>>  Classiefier hinzugefügt
