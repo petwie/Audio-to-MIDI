@@ -47,7 +47,7 @@ direction TB
 
         +findKick()
         +findSnare()
-        +findHiHat()
+        +findHihat()
     }
 
     class  LoadSTFT{
@@ -60,6 +60,7 @@ direction TB
     AudioToMidi *-- LoadSTFT
     AudioToMidi *-- SpectralFluxCalculator
     AudioToMidi *-- MidiExport
-    AudioToMidi *-- Klassifierer
     AudioToMidi *-- PeakPicking
+    Classifier *-- SpectralFluxCalculator
+    Classifier *-- PeakPicking
     
