@@ -39,7 +39,7 @@ class AudioToMidi:
 
         self.picker = PeakPicking(self.flux.calculated_FLUX)
 
-        self.onsets = self.picker.find_peaks(window_size=20, delta=1, wait=5)
+        self.onsets = self.picker.find_peaks(window_size=12, delta=50, wait=3)
         
         self.picker.plot_results()
 
