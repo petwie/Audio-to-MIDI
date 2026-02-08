@@ -37,7 +37,7 @@
     \subsection{Calculation of Spectral Flux}
         The spectral flux is calculated as the difference between the logarithmic magnitude spectra of consecutive frames:
         \begin{equation}
-            F(n) = \sum_{k=0}^{N-1} (L_n(k) - L_{n-1}(k))^2
+            F(n) = \sum_{k=0}^{N-1} L_n(k) - L_{n-1}(k)
         \end{equation}
         For each frame \( n \), the spectral flux \( F(n) \) is computed by summing the squared differences of the logarithmic magnitude spectra \( L_n(k) \) and \( L_{n-1}(k) \) across all frequency bins \( k \).
         The frames are typically stored in a 2D array where each column represents a frame and each row represents a frequency bin. The difference between consecutive frames can be represented as:
@@ -108,7 +108,7 @@
         \\
         \\
         For example, given the spectral flux values:
-        \[ \begin{bmatrix}
+        \[ \Delta L = \begin{bmatrix}
                 -2 & 2 & -4 \\
                 3  & 1 & 5\\
                 -1 & 4 & -6
@@ -121,7 +121,7 @@
             \end{bmatrix}
         \]
         And Summed up:
-        \[ \begin{bmatrix}
+        \[ F =\begin{bmatrix}
                 0+3+0 & 2+1+4 & 0+5+0
             \end{bmatrix}^T
             =
