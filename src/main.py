@@ -16,7 +16,11 @@ def main():
     """
 
     
+<<<<<<< HEAD
     audio_to_midi = AudioToMidi.AudioToMidi("tests/Kick3.m4a")
+=======
+    audio_to_midi = AudioToMidi.AudioToMidi("../tests/KickLoop_Test1.m4a")
+>>>>>>>  Classiefier hinzugefügt
     audio_to_midi.runfile()
     
 

@@ -14,6 +14,7 @@ class AudioToMidi:
         self.stft = LoadSTFT(n_fft=2048, hop_length=512, audio=self.audio)
         self.flux = None  # Placeholder for SpectralFluxCalculator instance
         self.picker = None
+        self.midi_writer = None
         # Further processing steps would go here
 
     def runfile(self):
@@ -36,14 +37,18 @@ class AudioToMidi:
 
         self.flux.plot_spectral_flux(self.flux.calculated_FLUX, title="Positive Spectral Flux") 
 
-        picker = PeakPicking(self.flux.calculated_FLUX)
+        self.picker = PeakPicking(self.flux.calculated_FLUX)
 
-        onsets = picker.find_peaks(window_size=20, delta=1, wait=5)
+        self.onsets = self.picker.find_peaks(window_size=20, delta=1, wait=5)
         
-        picker.plot_results()
+        self.picker.plot_results()
 
-        midi_writer = MidiExport(bpm=120)
+        self.midi_writer = MidiExport(bpm=120)
 
         output_filename = self.file_path.replace(".m4a", ".mid").replace(".wav", ".mid")
 
+<<<<<<< HEAD
         midi_writer.export_midi(onsets_frames=onsets, output_path=output_filename, sample_rate=self.audio.sample_rate, hop_length=self.stft.hop_length)
+=======
+        self.midi_writer.export_midi(onsets_frames=self.onsets, output_path=output_filename, sample_rate=self.audio.sample_rate, hop_length=self.stft.hop_length)
+>>>>>>>  Classiefier hinzugefügt

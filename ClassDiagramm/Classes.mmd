@@ -14,11 +14,16 @@ direction TB
         
         +logarithmic_Magnitude(self)
         +calculate_spectral_flux(self)
-        +plot_spectral_flux(calculated_FLUX, title="Spectral Flux"):
+        +plot_spectral_flux(calculated_FLUX, title="Spectral Flux")
 
     }
 
     class PeakPicking{
+        flux_array
+
+        +calculate_adaptive_threshold(self, window_size, delta)
+        +find_peaks(self, window_size=10, delta=0.1, wait=5)
+
     }
 
     class AudioToMidi{
@@ -28,11 +33,21 @@ direction TB
     }
 
     class MidiExport{
+        bpm
+        seconds_to_ticks(self, seconds)
+        plot_spectrogram(self,title="Spectrogram")
 
     }
 
-    class DrumKlassifierer{
+    class Classifier{
+        stft
+        onsets_Kick
+        onsets_Snare
+        onsets_HiHat
 
+        +findKick()
+        +findSnare()
+        +findHiHat()
     }
 
     class  LoadSTFT{
@@ -45,5 +60,6 @@ direction TB
     AudioToMidi *-- LoadSTFT
     AudioToMidi *-- SpectralFluxCalculator
     AudioToMidi *-- MidiExport
-    AudioToMidi *-- DrumKlassifierer
-    PeakPicking -- SpectralFluxCalculator
+    AudioToMidi *-- Klassifierer
+    AudioToMidi *-- PeakPicking
+    
