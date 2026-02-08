@@ -3,6 +3,7 @@ from LoadSTFT import LoadSTFT
 from SpectralFluxCalculator import SpectralFluxCalculator
 from PeakPicking import PeakPicking
 from MidiExport import MidiExport
+from Filtering import Filtering
 
 class AudioToMidi:
 
@@ -11,7 +12,8 @@ class AudioToMidi:
         self.file_path = file_path
         
         self.audio = LoadAudioFile(file_path)
-        self.stft = LoadSTFT(n_fft=2048, hop_length=512, audio=self.audio)
+        self.filer = None  # Placeholder for Filtering instance
+        self.stft = None
         self.flux = None  # Placeholder for SpectralFluxCalculator instance
         self.picker = None
         self.midi_writer = None
@@ -22,6 +24,14 @@ class AudioToMidi:
           # Hier kommt der Code hin, der die Datei verarbeitet(Eigentlicher ablauf)
 
         self.audio.load_audio()
+
+        self.filer = Filtering(self.audio.audio_array, kick_lower_frequency=20, kick_upper_frequency=150, snare_lower_frequency=150, snare_upper_frequency=2500, hihat_lower_frequency=3000, hihat_upper_frequency=20000, sample_rate=self.audio.sample_rate)
+
+        self.filer.load_filter("Kick")
+
+        self.filer.filter_for_Kick()
+
+        self.stft = LoadSTFT(n_fft=2048, hop_length=512, audio=self.filer.y_kick, sample_rate=self.audio.sample_rate)
 
         self.stft.calculate_STFT()
 

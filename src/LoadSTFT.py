@@ -7,15 +7,16 @@ import os
 
 class LoadSTFT:
     
-    def __init__(self,n_fft,hop_length,audio):
+    def __init__(self,n_fft,hop_length,audio,sample_rate):
         self.calculated_stft = None
         self.n_fft = n_fft
         self.hop_length = hop_length
         self.audio = audio
+        self.sample_rate = sample_rate
 
     def calculate_STFT(self):
 
-        AudioArray = self.audio.audio_array
+        AudioArray = self.audio
         n_fft = self.n_fft
         hop_length = self.hop_length
 
@@ -34,7 +35,7 @@ class LoadSTFT:
 
     def plot_spectrogram(self,title="Spectrogram"):
         stft_result = self.calculated_stft
-        sample_rate = self.audio.sample_rate
+        sample_rate = self.sample_rate
         hop_length = self.hop_length
 
         if stft_result is None:
