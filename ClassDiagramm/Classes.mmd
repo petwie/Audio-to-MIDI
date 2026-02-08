@@ -39,7 +39,7 @@ direction TB
 
     }
 
-    class Classifier{
+    class Filter{
         stft
         onsets_Kick
         onsets_Snare
@@ -61,6 +61,4 @@ direction TB
     AudioToMidi *-- SpectralFluxCalculator
     AudioToMidi *-- MidiExport
     AudioToMidi *-- PeakPicking
-    Classifier *-- SpectralFluxCalculator
-    Classifier *-- PeakPicking
     
