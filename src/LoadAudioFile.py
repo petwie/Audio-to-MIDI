@@ -1,5 +1,5 @@
 import numpy as np
-import librosas
+import librosa
 import matplotlib.pyplot as plt
 import os
 
