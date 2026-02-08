@@ -16,7 +16,7 @@ def main():
     """
 
     
-    audio_to_midi = AudioToMidi.AudioToMidi("tests/Kick3.m4a")
+    audio_to_midi = AudioToMidi.AudioToMidi("tests/Kick1.m4a")
     audio_to_midi.runfile()
     
 
