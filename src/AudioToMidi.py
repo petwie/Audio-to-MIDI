@@ -2,6 +2,7 @@ from LoadAudioFile import LoadAudioFile   # oder: from LoadAudioFile import Load
 from LoadSTFT import LoadSTFT
 from SpectralFluxCalculator import SpectralFluxCalculator
 from PeakPicking import PeakPicking
+from MidiExport import MidiExport
 
 class AudioToMidi:
 
@@ -37,10 +38,15 @@ class AudioToMidi:
 
         picker = PeakPicking(self.flux.calculated_FLUX)
 
-        onsets = picker.find_peaks(window_size=20, delta=200, wait=10)
+        onsets = picker.find_peaks(window_size=20, delta=1, wait=5)
         
         picker.plot_results()
 
+        midi_writer = MidiExport(bpm=120)
+
+        output_filename = self.file_path.replace(".m4a", ".mid").replace(".wav", ".mid")
+
+        midi_writer.export_midi(onsets_frames=onsets, output_path=output_filename, sample_rate=self.audio.sample_rate, hop_length=self.stft.hop_length)
 
 
         
