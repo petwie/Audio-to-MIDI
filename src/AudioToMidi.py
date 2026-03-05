@@ -26,7 +26,7 @@ class AudioToMidi:
     def runfile(self):
 
 # 1. KICK VERARBEITEN
-        self.audio_kick.load_audio()
+        self.audio_kick.load_audio(k=1.5)
         # Hier korrigiert: self.audio_kick.sample_rate statt self.audio.sample_rate
         self.stft = LoadSTFT(n_fft=2048, hop_length=512, audio=self.audio_kick.audio_array, sample_rate=self.audio_kick.sample_rate)
 
@@ -46,11 +46,11 @@ class AudioToMidi:
 
         self.picker = PeakPicking(self.flux.calculated_FLUX)
 
-        self.onsets_kick = self.picker.find_peaks(window_size=512, wait=3)
+        self.onsets_kick = self.picker.find_peaks(window_size=16, wait=4)
         
         self.picker.plot_results()
 
-        self.audio_snare.load_audio()
+        self.audio_snare.load_audio(k=1.5)
 
         self.stft = LoadSTFT(n_fft=2048, hop_length=512, audio=self.audio_snare.audio_array, sample_rate=self.audio_snare.sample_rate)
 
@@ -70,11 +70,11 @@ class AudioToMidi:
 
         self.picker = PeakPicking(self.flux.calculated_FLUX)
 
-        self.onsets_snare = self.picker.find_peaks(window_size=512, wait=3)
+        self.onsets_snare = self.picker.find_peaks(window_size=16, wait=4)
         
         self.picker.plot_results()
 
-        self.audio_hihat.load_audio()
+        self.audio_hihat.load_audio(k=1)
 
         self.stft = LoadSTFT(n_fft=2048, hop_length=512, audio=self.audio_hihat.audio_array, sample_rate=self.audio_hihat.sample_rate)
 
@@ -94,11 +94,11 @@ class AudioToMidi:
 
         self.picker = PeakPicking(self.flux.calculated_FLUX)
 
-        self.onsets_hihat = self.picker.find_peaks(window_size=512, wait=3)
+        self.onsets_hihat = self.picker.find_peaks(window_size=32, wait=4)
         
         self.picker.plot_results()
 
-        self.midi_writer = MidiExport(bpm=120)
+        self.midi_writer = MidiExport(bpm=136)
 
         output_filename = self.file_path_kick.replace(".m4a", ".mid").replace(".wav", ".mid")
 

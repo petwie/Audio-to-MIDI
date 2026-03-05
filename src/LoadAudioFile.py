@@ -10,7 +10,7 @@ class LoadAudioFile:
         self.audio_array, self.sample_rate = None, None
         self.file_path = file_path
 
-    def load_audio(self, target_sr=44100, mono=True):
+    def load_audio(self, target_sr=44100, k=3, mono=True):
         # 1. Check: Existiert die Datei überhaupt?
         if not os.path.exists(self.file_path):
             print(f"FEHLER: Die Datei '{self.file_path}' wurde nicht gefunden.")
@@ -32,6 +32,9 @@ class LoadAudioFile:
                 print(f"WARNUNG: Datei ist extrem kurz ({librosa.get_duration(y=self.audio_array, sr=self.sample_rate):.3f}s).")
 
             print(f"Erfolg: Audio geladen ({len(self.audio_array)} Samples, {self.sample_rate} Hz).")
+
+            self.audio_array = self.noise_gate(self.audio_array, k)
+
             return self.audio_array, self.sample_rate
 
         except Exception as e:
@@ -39,3 +42,19 @@ class LoadAudioFile:
             print(f"KRITISCHER FEHLER beim Laden: {e}")
             return None, None
 
+    def noise_gate(self, audio_array, k=3):
+        """
+        Einfache Rauschunterdrückung durch Abschneiden von leisen Passagen.
+        Alles unter threshold_db wird auf 0 gesetzt.
+        """
+        env = np.abs(audio_array)
+
+        mu = np.mean(env)
+        
+        sigma = np.std(env)
+
+        threshold = mu + k*sigma
+
+        filtered = np.where(env < threshold, 0, audio_array)
+        
+        return filtered

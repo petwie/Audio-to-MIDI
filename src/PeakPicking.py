@@ -19,7 +19,7 @@ class PeakPicking:
         moving_avg = np.convolve(self.flux, kernel, mode='same')
         
         # Offset (Delta) addieren
-        deltas = self.calculate_delta(window_size, 2)
+        deltas = self.calculate_delta(window_size, 3)
         for i in range(len(moving_avg)):
             delta_index = int(i / window_size)
             if delta_index < len(deltas):
