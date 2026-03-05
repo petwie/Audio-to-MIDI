@@ -7,7 +7,7 @@ class PeakPicking:
         self.onsets = []        # Liste der gefundenen Indizes
         self.threshold_curve = [] # Zum Speichern der berechneten Schwelle
 
-    def calculate_adaptive_threshold(self, window_size, delta):
+    def calculate_adaptive_threshold(self, window_size):
         """
         Berechnet den gleitenden Durchschnitt manuell mittels Faltung.
         """
@@ -19,18 +19,18 @@ class PeakPicking:
         moving_avg = np.convolve(self.flux, kernel, mode='same')
         
         # Offset (Delta) addieren
-        self.threshold_curve = moving_avg + delta
+        self.threshold_curve = moving_avg + self.calculate_delta()
         
         return self.threshold_curve
 
-    def find_peaks(self, window_size=10, delta=0.1, wait=5):
+    def find_peaks(self, window_size=10,  wait=5):
         """
         Findet Peaks, die über dem adaptiven Threshold liegen.
         wait: Mindestabstand in Frames (Debouncing).
         """
         
         # Threshold berechnen
-        thresholds = self.calculate_adaptive_threshold(window_size, delta)
+        thresholds = self.calculate_adaptive_threshold(window_size)
         
         found_peaks = []
         last_peak_index = -wait  # Initialisierung für Debouncing
@@ -77,3 +77,7 @@ class PeakPicking:
         plt.legend()
         plt.grid(True, alpha=0.3)
         plt.show()
+
+    def calculate_delta(self):
+
+        return np.mean(self.flux) * 1.5
