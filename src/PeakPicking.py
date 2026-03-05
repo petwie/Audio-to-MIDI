@@ -19,11 +19,17 @@ class PeakPicking:
         moving_avg = np.convolve(self.flux, kernel, mode='same')
         
         # Offset (Delta) addieren
-        self.threshold_curve = moving_avg + self.calculate_delta()
+        deltas = self.calculate_delta(window_size, 2)
+        for i in range(len(moving_avg)):
+            delta_index = int(i / window_size)
+            if delta_index < len(deltas):
+                moving_avg[i] += deltas[delta_index]
+
+        self.threshold_curve = moving_avg
         
         return self.threshold_curve
 
-    def find_peaks(self, window_size=10,  wait=5):
+    def find_peaks(self, window_size,  wait):
         """
         Findet Peaks, die über dem adaptiven Threshold liegen.
         wait: Mindestabstand in Frames (Debouncing).
@@ -78,6 +84,13 @@ class PeakPicking:
         plt.grid(True, alpha=0.3)
         plt.show()
 
-    def calculate_delta(self):
+    def calculate_delta(self, window_size, multiplier):
 
-        return np.mean(self.flux) * 1.5
+        len_flux = len(self.flux)
+        delta_values = np.zeros(int(np.ceil(len_flux/window_size)))
+        for i in range(len(delta_values)):
+            start = i * window_size
+            end = min((i + 1) * window_size, len_flux)
+            delta_values[i] = np.mean(self.flux[start:end]) * multiplier
+
+        return delta_values

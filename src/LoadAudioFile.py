@@ -10,7 +10,7 @@ class LoadAudioFile:
         self.audio_array, self.sample_rate = None, None
         self.file_path = file_path
 
-    def load_audio(self, target_sr=22050, mono=True):
+    def load_audio(self, target_sr=44100, mono=True):
         # 1. Check: Existiert die Datei überhaupt?
         if not os.path.exists(self.file_path):
             print(f"FEHLER: Die Datei '{self.file_path}' wurde nicht gefunden.")
