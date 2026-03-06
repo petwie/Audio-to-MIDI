@@ -6,9 +6,26 @@
 \usepackage{amsmath, amssymb}
 \usepackage{graphicx}
 \usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
 
+% Python-Style für Listings
+\lstdefinestyle{python}{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{red},
+    commentstyle=\color{green!50!black},
+    showstringspaces=false,
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1,
+    frame=single,
+    breaklines=true
+}
+\lstset{style=python} % Globaler Stil für Listings
 
-\title{Dokumentation SMP Projekt }
+\title{Dokumentation SMP Projekt}
 \author{Peter Wienken, Aaron Weis}
 \date{\today}
 
@@ -20,7 +37,6 @@
 \newpage
 
 \section{Audio Import}
-    \subsection{Noise Gate}
 
 \section{FFT Analyse}
     \subsection{FFT Algorithm}
@@ -73,125 +89,141 @@
     \subsection{Windowing}
     
 
-\section{FLUX Detection}X
+\section{FLUX Detection}
 
-\subsection{Calculation of Logarithmic Magnitude Spectrum}
+    \subsection{Calculation of Logarithmic Magnitude Spectrum}
 
-    The logarithmic magnitude spectrum is calculated using the formula:
-    \begin{equation}
-        L(k) = \log_{10}(|X(k)|)
-    \end{equation}
-    It transforms the linear magnitude spectrum into a logarithmic scale,
-    which is more aligned with human auditory perception.
+        The logarithmic magnitude spectrum is calculated using the formula:
+        \begin{equation}
+            L(k) = \log_{10}(|X(k)|)
+        \end{equation}
+        It transforms the linear magnitude spectrum into a logarithmic scale,
+        which is more aligned with human auditory perception.
 
-\subsection{Calculation of Spectral Flux}
-    The spectral flux is calculated as the difference between the logarithmic magnitude spectra of consecutive frames:
-    \begin{equation}
-        F(n) = \sum_{k=0}^{N-1} L_n(k) - L_{n-1}(k)
-    \end{equation}
-    For each frame \( n \), the spectral flux \( F(n) \) is computed by summing the squared differences of the logarithmic magnitude spectra \( L_n(k) \) and \( L_{n-1}(k) \) across all frequency bins \( k \).
-    The frames are typically stored in a 2D array where each column represents a frame and each row represents a frequency bin. The difference between consecutive frames can be represented as:
-    \begin{equation}
-        \Delta L(k) = L_n(k) - L_{n-1}(k)
-    \end{equation}
-    Example of a 2D array representing frames and frequency bins:
-    \[
-    \mathbf{L} =
-    \begin{bmatrix}
-            1 & 4 & 1 & 6 \\
-            3 & 2 & 2 & 1 \\
-            1 & 5 & 3 & 6
-    \end{bmatrix}
-    \]
-    The resulting difference between consecutive frames is:
-    \[
-    \Delta \mathbf{L} =
-    \begin{bmatrix}
-            4 & 1 & 6 \\
-            2 & 2 & 1 \\
-            5 & 3 & 6
-    \end{bmatrix} 
-    -
-    \begin{bmatrix}
-            1 & 4 & 1 \\
-            3 & 2 & 2 \\
-            1 & 5 & 3
-    \end{bmatrix} 
-    =
-    \begin{bmatrix}
-            3 & -3 & 5 \\
-            -1 & 0 & -1 \\
-            4 & -2 & 3
-    \end{bmatrix}
-        \]
-    Then, the spectral flux is computed by summing these differences across all frequency bins for each frame:
-    \begin{equation}
-        F(n) = \sum_{k} |\Delta L(k)|
-    \end{equation}
-    \[
-    \mathbf{F} =
-    \begin{bmatrix}
-        |3| + |(-1)| + |4| &
-        |(-3)| + |0| + |(-2)| &
-        |5| + |(-1)| + |3|
-    \end{bmatrix}^T
-    =
-    \begin{bmatrix}
-        8 & 5 & 9
-    \end{bmatrix}^T
-    \]
-        The Code to calculate the spectral flux from the differences is as follows:
-        \small
-        \begin{verbatim}
-        flux = np.sum((calculated_FLUX[:, 1:] - calculated_FLUX[:, :-1]))
-        \end{verbatim}
-        \normalsize
-
-\subsection{Half-Wave Rectification}
-    Half-wave rectification is applied to the spectral flux to retain only positive values, which correspond to increases in spectral energy. This is done by setting all negative values to zero:
-    \begin{equation}
-        F_{rect}(n) = \max(0, F(n))
-    \end{equation}
-    This step ensures that only significant increases in spectral energy are considered for further analysis.
-    \\
-    \\
-    For example, given the spectral flux values:
-    \[ \Delta L = \begin{bmatrix}
-            -2 & 2 & -4 \\
-            3  & 1 & 5\\
-            -1 & 4 & -6
-        \end{bmatrix}
-        = 
+     \subsection{Calculation of Spectral Flux}
+        The spectral flux is calculated as the difference between the logarithmic magnitude spectra of consecutive frames:
+        \begin{equation}
+            F(n) = \sum_{k=0}^{N-1} L_n(k) - L_{n-1}(k)
+        \end{equation}
+        For each frame \( n \), the spectral flux \( F(n) \) is computed by summing the squared differences of the logarithmic magnitude spectra \( L_n(k) \) and \( L_{n-1}(k) \) across all frequency bins \( k \).
+        The frames are typically stored in a 2D array where each column represents a frame and each row represents a frequency bin. The difference between consecutive frames can be represented as:
+        \begin{equation}
+            \Delta L(k) = L_n(k) - L_{n-1}(k)
+        \end{equation}
+        Example of a 2D array representing frames and frequency bins:
+        \[
+        \mathbf{L} =
         \begin{bmatrix}
-            0 & 2 & 0 \\
-            3 & 1 & 5\\
-            0 & 4 & 0
+                1 & 4 & 1 & 6 \\
+                3 & 2 & 2 & 1 \\
+                1 & 5 & 3 & 6
         \end{bmatrix}
-    \]
-    And Summed up:
-    \[ F =\begin{bmatrix}
-            0+3+0 & 2+1+4 & 0+5+0
+        \]
+        The resulting difference between consecutive frames is:
+        \[
+        \Delta \mathbf{L} =
+        \begin{bmatrix}
+                4 & 1 & 6 \\
+                2 & 2 & 1 \\
+                5 & 3 & 6
+        \end{bmatrix} 
+        -
+        \begin{bmatrix}
+                1 & 4 & 1 \\
+                3 & 2 & 2 \\
+                1 & 5 & 3
+        \end{bmatrix} 
+        =
+        \begin{bmatrix}
+                3 & -3 & 5 \\
+                -1 & 0 & -1 \\
+                4 & -2 & 3
+        \end{bmatrix}
+            \]
+        Then, the spectral flux is computed by summing these differences across all frequency bins for each frame:
+        \begin{equation}
+            F(n) = \sum_{k} |\Delta L(k)|
+        \end{equation}
+        \[
+        \mathbf{F} =
+        \begin{bmatrix}
+            |3| + |(-1)| + |4| &
+            |(-3)| + |0| + |(-2)| &
+            |5| + |(-1)| + |3|
         \end{bmatrix}^T
         =
         \begin{bmatrix}
-            3 & 7 & 5
-        \end{bmatrix}^T
-    \]
+            8 & 5 & 9
+            \end{bmatrix}^T
+            \]
+        The Code to calculate the spectral flux from the differences is as follows:
+        \small
+ \begin{lstlisting}
+flux = np.sum((calculated_FLUX[:, 1:] - calculated_FLUX[:, :-1]))   
+ \end{lstlisting}
+         \normalsize
 
+    \subsection{Half-Wave Rectification}
+        Half-wave rectification is applied to the spectral flux to retain only positive values, which correspond to increases in spectral energy. This is done by setting all negative values to zero:
+        \begin{equation}
+            F_{rect}(n) = \max(0, F(n))
+        \end{equation}
+        This step ensures that only significant increases in spectral energy are considered for further analysis.
+        \\
+        \\
+        For example, given the spectral flux values:
+        \[ \Delta L = \begin{bmatrix}
+                -2 & 2 & -4 \\
+                3  & 1 & 5\\
+                -1 & 4 & -6
+            \end{bmatrix}
+            = 
+            \begin{bmatrix}
+                0 & 2 & 0 \\
+                3 & 1 & 5\\
+                0 & 4 & 0
+            \end{bmatrix}
+        \]
+        And Summed up:
+        \[ F =\begin{bmatrix}
+                0+3+0 & 2+1+4 & 0+5+0
+            \end{bmatrix}^T
+            =
+            \begin{bmatrix}
+                3 & 7 & 5
+            \end{bmatrix}^T
+        \]
+\newpage
 \section{Onset Detection}
-Onset detection is an essential processing step within the pipeline. The goal of this procedure is to identify the exact timings (onsets) of musical events. In the case of drum detection, drum hits are identified, from a novelty function, which is the calculated positive spectral flux.
-
-Consequently, a peak is only registered if three criteria are met simultaneously:
-\begin{enumerate}
-    \item \textbf{Amplitude:} The signal must be loud enough and exceed the local adaptive threshold.
-    \item \textbf{Local Maximum:} The considered point must have a larger value than its direct temporal neighbors (the frame before and after).
-    \item \textbf{Debouncing (Minimum Distance):} A single musical event can cause fluctuations over several frames. To avoid multiple detections of the same beat, a defined waiting time (\texttt{wait}) must be maintained between two detected peaks.
-\end{enumerate}
-
-\subsection{Adaptive Threshold and offset}
-An adaptive threshold follows the rough envelope of the signal. Typically, a moving average is calculated over a time window of a defined size for this purpose. To prevent the background noise (noise floor) from being falsely detected as a peak, an offset (delta) is added to this average. This offset can be static or adapt dynamically to signal blocks.
-
-\textbf{Implementation Example:} In the present implementation, the moving average is realized by a mathematical convolution (\texttt{np.convolve}) of the flux with a uniformly distributed kernel. The offset is calculated and added block-wise:
+    Onset detection is an essential processing step within the pipeline. The goal of this procedure is to identify the exact timings (onsets) of musical events. In the case of drum detection, drum hits are identified, from a novelty function, which is the calculated positive spectral flux.\\
+    Consequently, a peak is only registered if three criteria are met simultaneously:
+    \begin{enumerate}
+        \item \textbf{Amplitude:} The signal must be loud enough and exceed the local adaptive threshold.
+        \item \textbf{Local Maximum:} The considered point must have a larger value than its direct temporal neighbors (the frame before and after).
+        \item \textbf{De-bouncing (Minimum Distance):} A single musical event can cause fluctuations over several frames. To avoid multiple detections of the same beat, a defined waiting time (\texttt{wait}) must be maintained between two detected peaks.
+    \end{enumerate}
+\newpage
+    \subsection{Adaptive Threshold and offset}
+        An adaptive threshold follows the rough envelope of the signal. Typically, a moving average is calculated over a time window of a defined size for this purpose. The moving average serves to smooth the spectral flux and forms the basis of the adaptive threshold. Mathematically, the filter can be described as a discrete convolution of the input signal with a filter kernel.\\
+        Let $x[n]$ be the discrete-time input signal (the spectral flux at frame $n$) and $N$ the window size (\texttt{window\_size}). The output of the filter $y[n]$ is the unweighted mean of the $N$ adjacent samples.\\
+        The centered calculation (corresponding to the \texttt{mode='same'} parameter in the code) can be expressed by the following sum formula:
+\begin{equation}
+    y[n] = \frac{1}{N} \sum_{k = -\lfloor \frac{N}{2} \rfloor}^{\lfloor \frac{N-1}{2} \rfloor} x[n+k]
+\end{equation}\\
+In signal processing, this operation is typically formulated as a discrete convolution. The signal $x[n]$ is convolved with the impulse response (the kernel) $h[n]$:
+\begin{equation}
+    y[n] = (x * h)[n] = \sum_{k=-\infty}^{\infty} x[k] \cdot h[n-k]
+\end{equation}\\
+The filter kernel $h[n]$ is a rectangular window of length $N$, where all values are equally weighted. This corresponds to the code line \texttt{kernel = np.ones(window\_size) / window\_size}:
+\begin{equation}
+    h[n] = 
+    \begin{cases} 
+        \frac{1}{N} & \text{for } 0 \leq n < N \\ 
+        0 & \text{otherwise} 
+    \end{cases}
+\end{equation}\\
+Through this convolution operation, short-term noise is suppressed and the fundamental dynamic envelope (the trend) of the signal is extracted, onto which the offset for the final threshold is subsequently added.
+To prevent background noise (noise floor) from being falsely detected as a peak, an offset (delta) is added to this average. This offset can be static or dynamically adapt to signal blocks.\newline In the present implementation, the moving average is realized by a mathematical convolution (\texttt{np.convolve}) of the flux with a uniformly distributed kernel. The offset is calculated and added block-wise:
 
 \begin{lstlisting}
 def calculate_adaptive_threshold(self, window_size):
@@ -219,12 +251,10 @@ def calculate_delta(self, window_size, multiplier):
         delta_values[i] = np.mean(self.flux[start:end]) * multiplier
     return delta_values
 \end{lstlisting}
-\end{itemize}
-
-\subsection{Identification of Peaks (Peak Picking)}
-Once the threshold curve is available, the algorithm iterates through the signal. At each point, it checks whether the current value exceeds the threshold, whether it is the tip of a local hill, and whether the time distance to the last detected peak is large enough (debouncing).
-
-\textbf{Implementation Example:} This can be implemented very directly as a loop with conditional checks.
+\newpage
+                \subsection{Identification of Peaks (Peak Picking)}
+                Once the threshold curve is available, the algorithm iterates through the signal. At each point, it checks whether the current value exceeds the threshold, whether it is the tip of a local hill, and whether the time distance to the last detected peak is large enough (de-bouncing).\\
+                This can be implemented very directly as a loop with conditional checks.
 
 \begin{lstlisting}
 def find_peaks(self, window_size, wait):
@@ -250,15 +280,17 @@ def find_peaks(self, window_size, wait):
     return self.onsets
 \end{lstlisting}
 
-\subsection{Practical Application}
-The parameters for the window size (\texttt{window\_size}) and the waiting time (\texttt{wait}) depend heavily on the characteristics of the signal to be analyzed. For percussive, low-frequency instruments like a kick drum, different parameters are often chosen than for high-frequency, fast instruments like a hi-hat. 
+                        \subsection{Practical Application}
+                        The parameters for window size (\texttt{window\_size}) and waiting time (\texttt{wait}) depend heavily on the characteristics of the signal to be analyzed. For percussive, low-frequency instruments like a kick drum, different parameters are often chosen compared to high-frequency, fast instruments like a hi-hat.\\
+                        In an exemplary use case, a window size of 16 is used for the kick and snare, for instance, while the more densely played hi-hat is smoothed with a window size of 32, both maintaining the same de-bouncing wait time of 4 frames.
+\newpage
 
-In an exemplary use case, a window size of 16 is used for the kick and snare, for instance, while the more densely played hi-hat is smoothed with a window size of 32, both maintaining the same debouncing wait time of 4 frames.
-\section{Filtering}
 
 \section{MIDI Export}
 
 \section{Deep Learning based Source Separation}
+
+
 
 \section{Fazit}
 Hier steht das Fazit.
