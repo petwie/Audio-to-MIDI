@@ -16,7 +16,11 @@ def main():
     """
 
     
-    audio_to_midi = AudioToMidi.AudioToMidi("/Users/aaronweis/Desktop/Uni/SMP/Projekt/Audio-to-MIDI/tests/Kick1.m4a", "/Users/aaronweis/Desktop/Uni/SMP/Projekt/Audio-to-MIDI/tests/Snare2.m4a", "/Users/aaronweis/Desktop/Uni/SMP/Projekt/Audio-to-MIDI/tests/Hihat5.m4a")
+    audio_to_midi = AudioToMidi.AudioToMidi(
+        "/Users/admin/Desktop/Uni/SMP/ProjektArbeit/Audio-to-MIDI/tests/Kick1.m4a",
+        "/Users/admin/Desktop/Uni/SMP/ProjektArbeit/Audio-to-MIDI/tests/Snare2.m4a",
+        "/Users/admin/Desktop/Uni/SMP/ProjektArbeit/Audio-to-MIDI/tests/Hihat5.m4a"
+    )
     audio_to_midi.runfile()
     
 

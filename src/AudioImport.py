@@ -61,3 +61,4 @@ def plot_spectrogram(stft_result, sample_rate, hop_length, title="Spectrogram"):
         plt.show()
     except Exception as e:
         print(f"FEHLER beim Plotten des Spektrogramms: {e}")
+    

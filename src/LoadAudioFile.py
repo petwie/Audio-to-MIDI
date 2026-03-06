@@ -38,4 +38,11 @@ class LoadAudioFile:
             # 4. Catch-All: Fängt alle anderen Librosa-Internen Fehler ab (z.B. falscher Codec)
             print(f"KRITISCHER FEHLER beim Laden: {e}")
             return None, None
+    
+    def noise_gate(self):
+        # Ein einfacher Noise Gate: Alle Samples unterhalb des Thresholds werden auf 0 gesetzt
+        env = np.abs(self.audio_array)
+        threshold = np.percentile(env, 90)
+        self.audio_array = np.where(np.abs(self.audio_array) < threshold, 0, self.audio_array)
+        return self.audio_array
 

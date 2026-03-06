@@ -27,6 +27,8 @@ class AudioToMidi:
 
 # 1. KICK VERARBEITEN
         self.audio_kick.load_audio()
+
+        self.audio_kick.audio_array = self.audio_kick.noise_gate()
         # Hier korrigiert: self.audio_kick.sample_rate statt self.audio.sample_rate
         self.stft = LoadSTFT(n_fft=2048, hop_length=512, audio=self.audio_kick.audio_array, sample_rate=self.audio_kick.sample_rate)
 
@@ -50,7 +52,12 @@ class AudioToMidi:
         
         self.picker.plot_results()
 
+# 2. SNARE VERARBEITEN
+
+
         self.audio_snare.load_audio()
+
+        self.audio_snare.audio_array = self.audio_snare.noise_gate()
 
         self.stft = LoadSTFT(n_fft=2048, hop_length=512, audio=self.audio_snare.audio_array, sample_rate=self.audio_snare.sample_rate)
 
@@ -74,7 +81,11 @@ class AudioToMidi:
         
         self.picker.plot_results()
 
+#hi-hat verarbeiten
+
         self.audio_hihat.load_audio()
+
+        self.audio_hihat.audio_array = self.audio_hihat.noise_gate()
 
         self.stft = LoadSTFT(n_fft=2048, hop_length=512, audio=self.audio_hihat.audio_array, sample_rate=self.audio_hihat.sample_rate)
 
