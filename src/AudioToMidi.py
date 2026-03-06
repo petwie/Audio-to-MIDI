@@ -48,7 +48,7 @@ class AudioToMidi:
 
         self.picker = PeakPicking(self.flux.calculated_FLUX)
 
-        self.onsets_kick = self.picker.find_peaks(window_size=512, wait=3)
+        self.onsets_kick = self.picker.find_peaks(window_size=32, wait=10)
         
         self.picker.plot_results()
 
@@ -77,7 +77,7 @@ class AudioToMidi:
 
         self.picker = PeakPicking(self.flux.calculated_FLUX)
 
-        self.onsets_snare = self.picker.find_peaks(window_size=512, wait=3)
+        self.onsets_snare = self.picker.find_peaks(window_size=32, wait=4)
         
         self.picker.plot_results()
 
@@ -105,11 +105,11 @@ class AudioToMidi:
 
         self.picker = PeakPicking(self.flux.calculated_FLUX)
 
-        self.onsets_hihat = self.picker.find_peaks(window_size=512, wait=3)
+        self.onsets_hihat = self.picker.find_peaks(window_size=32, wait=2)
         
         self.picker.plot_results()
 
-        self.midi_writer = MidiExport(bpm=120)
+        self.midi_writer = MidiExport(bpm=104)
 
         output_filename = self.file_path_kick.replace(".m4a", ".mid").replace(".wav", ".mid")
 
