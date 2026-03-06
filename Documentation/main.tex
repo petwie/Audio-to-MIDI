@@ -130,8 +130,82 @@
             \end{bmatrix}^T
         \]
 
-\section{Peak Detection}
+\section{Onset Detection}
+Onset detection is an essential processing step within the pipeline. The goal of this procedure is to identify the exact timings (onsets) of musical events. In the case of drum detection, drum hits are identified, from a novelty function, which is the calculated positive spectral flux.
 
+Consequently, a peak is only registered if three criteria are met simultaneously:
+\begin{enumerate}
+    \item \textbf{Amplitude:} The signal must be loud enough and exceed the local adaptive threshold.
+    \item \textbf{Local Maximum:} The considered point must have a larger value than its direct temporal neighbors (the frame before and after).
+    \item \textbf{Debouncing (Minimum Distance):} A single musical event can cause fluctuations over several frames. To avoid multiple detections of the same beat, a defined waiting time (\texttt{wait}) must be maintained between two detected peaks.
+\end{enumerate}
+
+\subsection{Adaptive Threshold and offset}
+An adaptive threshold follows the rough envelope of the signal. Typically, a moving average is calculated over a time window of a defined size for this purpose. To prevent the background noise (noise floor) from being falsely detected as a peak, an offset (delta) is added to this average. This offset can be static or adapt dynamically to signal blocks.
+
+\textbf{Implementation Example:} In the present implementation, the moving average is realized by a mathematical convolution (\texttt{np.convolve}) of the flux with a uniformly distributed kernel. The offset is calculated and added block-wise:
+
+\begin{lstlisting}
+def calculate_adaptive_threshold(self, window_size):
+    # Filter kernel for moving average
+    kernel = np.ones(window_size) / window_size
+    moving_avg = np.convolve(self.flux, kernel, mode='same')
+    
+    # Calculate and add offset (delta)
+    deltas = self.calculate_delta(window_size, 3)
+    for i in range(len(moving_avg)):
+        delta_index = int(i / window_size)
+        if delta_index < len(deltas):
+            moving_avg[i] += deltas[delta_index]
+
+    self.threshold_curve = moving_avg
+    return self.threshold_curve
+
+def calculate_delta(self, window_size, multiplier):
+    # Block-wise calculation of the noise offset
+    len_flux = len(self.flux)
+    delta_values = np.zeros(int(np.ceil(len_flux/window_size)))
+    for i in range(len(delta_values)):
+        start = i * window_size
+        end = min((i + 1) * window_size, len_flux)
+        delta_values[i] = np.mean(self.flux[start:end]) * multiplier
+    return delta_values
+\end{lstlisting}
+\end{itemize}
+
+\subsection{Identification of Peaks (Peak Picking)}
+Once the threshold curve is available, the algorithm iterates through the signal. At each point, it checks whether the current value exceeds the threshold, whether it is the tip of a local hill, and whether the time distance to the last detected peak is large enough (debouncing).
+
+\textbf{Implementation Example:} This can be implemented very directly as a loop with conditional checks.
+
+\begin{lstlisting}
+def find_peaks(self, window_size, wait):
+    thresholds = self.calculate_adaptive_threshold(window_size)
+    found_peaks = []
+    last_peak_index = -wait  # Initialization for debouncing
+    n_frames = len(self.flux)
+
+    for i in range(1, n_frames - 1):
+        current_val = self.flux[i]
+        current_thresh = thresholds[i]
+        
+        # Condition 1: Above the threshold?
+        if current_val > current_thresh:
+            # Condition 2: Local maximum?
+            if current_val > self.flux[i-1] and current_val > self.flux[i+1]:
+                # Condition 3: Debouncing time expired?
+                if (i - last_peak_index) > wait:
+                    found_peaks.append(i)
+                    last_peak_index = i
+    
+    self.onsets = np.array(found_peaks)
+    return self.onsets
+\end{lstlisting}
+
+\subsection{Practical Application}
+The parameters for the window size (\texttt{window\_size}) and the waiting time (\texttt{wait}) depend heavily on the characteristics of the signal to be analyzed. For percussive, low-frequency instruments like a kick drum, different parameters are often chosen than for high-frequency, fast instruments like a hi-hat. 
+
+In an exemplary use case, a window size of 16 is used for the kick and snare, for instance, while the more densely played hi-hat is smoothed with a window size of 32, both maintaining the same debouncing wait time of 4 frames.
 \section{Fazit}
 Hier steht das Fazit.
 
