@@ -6,9 +6,26 @@
 \usepackage{amsmath, amssymb}
 \usepackage{graphicx}
 \usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
 
+% Python-Style für Listings
+\lstdefinestyle{python}{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{red},
+    commentstyle=\color{green!50!black},
+    showstringspaces=false,
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1,
+    frame=single,
+    breaklines=true
+}
+\lstset{style=python} % Globaler Stil für Listings
 
-\title{Dokumentation SMP Projekt }
+\title{Dokumentation SMP Projekt}
 \author{Peter Wienken, Aaron Weis}
 \date{\today}
 
@@ -19,9 +36,96 @@
 \tableofcontents
 \newpage
 
+\section{Project Description}
+
+\subsection{Goal and Motivation}
+The primary motivation behind this project is to develop a tool capable of extracting the kick drum, snare drum, and hi-hat from an existing audio track or drum loop, and translating their rhythmic patterns into a standard MIDI format.\\
+Often, musicians and producers encounter inspiring drum breaks or rhythms in existing songs but lack the individual MIDI notes to easily manipulate or recreate them. By extracting these rhythmic components and converting them into MIDI, users are empowered to isolate the groove, apply it to their own virtual drum samplers, alter the rhythm for new compositions, or simply generate an accurate rhythmic notation of the original performance.
+
+\subsection{Software and Libraries}
+The software development for this project was conducted using \textbf{Visual Studio Code (VS Code)} as the primary Integrated Development Environment (IDE).\\
+To achieve the complex task of audio separation and analysis, a combination of machine learning models and digital signal processing libraries was employed:
+
+\begin{itemize}
+    \item \textbf{Deep Learning Source Separation (PyTorch \& TorchAudio):} To isolate the complete drum stem from a full, mixed song, a pre-trained neural network was utilized. Specifically, the project uses the \texttt{HDEMUCS\_HIGH\_MUSDB\_PLUS} model provided by the \texttt{torchaudio.pipelines} module. This model separates the audio into discrete stems (vocals, drums, bass, other) using PyTorch for tensor operations and GPU acceleration when available.
+    \item \textbf{Individual Drum Extraction:} After isolating the overall drum stem, the tool \textbf{Rebeat} (\url{https://rebeatapp.com/}) was used to further separate this stem into the individual percussive components (kick, snare, and hi-hat).
+\end{itemize}\\
+For the core algorithmic pipeline (Audio-to-MIDI translation), the following Python libraries were implemented:
+\begin{itemize}
+    \item \textbf{Librosa:} Used for loading the audio files, preprocessing, and calculating the Short-Time Fourier Transform (STFT).
+    \item \textbf{NumPy:} Essential for handling all multidimensional arrays and performing the mathematical calculations required for the spectral flux and adaptive peak picking.
+    \item \textbf{Matplotlib:} Utilized for the visual evaluation of the algorithms, allowing the plotting of spectrograms, spectral flux curves, and the detected peak onsets.
+    \item \textbf{Mido:} A library dedicated to MIDI handling. It translates the algorithmically determined temporal events (in seconds or frames) into standard MIDI messages (ticks, Note On/Off) and exports the multi-track \texttt{.mid} file.
+\end{itemize}
+
+\section{Software Architecture}
+
+\subsection{Signal Processing Pipeline}
+
 \section{Audio Import}
+The first step in the pipeline is loading and preprocessing the audio files.
+
+\subsection{Loading Audio Data}
+The Python library \texttt{librosa} is used for the actual loading of the audio data. The \texttt{load\_audio} method reads the specified file, converts it to a mono signal by default, and uses a target sample rate of 44100 Hz. 
+
+\subsection{Noise Gate}
+After the signal has been successfully loaded, noise reduction is applied to remove background noise in quiet passages. This is realized by the \texttt{noise\_gate} method, which cuts off all values below a certain threshold and sets them to 0. The noise gate threshold is calculated dynamically using percentiles.
+\begin{enumerate}
+    \item To obtain an envelope of the signal, the absolute values of the array are first computed: $\text{env} = |\text{self.audio\_array}|$.
+    \item The threshold is then defined as the 90th percentile of this envelope using the \texttt{np.percentile(env, 90)} function. This means the threshold is set so that 90\% of the signal's amplitude values fall below it, effectively isolating the loudest 10\% of the audio (the actual drum hits).
+    \item Finally, using the \texttt{np.where} function, all signal components whose absolute magnitude is smaller than this calculated threshold are filtered out and overwritten with zero. 
+\end{enumerate}
 
 \section{FFT Analyse}
+    \subsection{FFT Algorithm}
+        The Fast Fourier Transform (FFT) algorithm is used for computing the Discrete Fourier Transform (DFT) of a sequence. 
+        The DFT of a sequence \( x(n) \) of length \( N \) is defined as:
+
+        \begin{equation}
+            X(k) = \sum_{n=0}^{N-1} x(n) e^{-j2\pi kn/N}
+        \end{equation}
+        For every frequency bin \( k \), the DFT computes a complex number \( X(k) \) that represents the amplitude and phase of the corresponding frequency component in the input signal.
+        To calculate \(N\) coefficients, \(O(N^2)\) operations are required.This is because for each of the N output values, a sum of N terms must be computed. 
+        
+
+        The FFT algorithm separates the DFT into smaller DFTs, by recursively dividing the input sequence into even and odd indexed elements.
+
+        \begin{equation}
+            X(k) = \sum_{n=0}^{N/2-1} x(2n) e^{-j2\pi k(2n)/N} + \sum_{n=0}^{N/2-1} x(2n+1) e^{-j2\pi k(2n+1)/N}
+        \end{equation}
+
+        For better understanding, the even and odd indexed elements can be represented as, by using the substitution:
+
+        \begin{equation}
+            X_{even}(k) = \sum_{n=0}^{N/2-1} x(2n) e^{-j2\pi kn/(N/2)}
+        \end{equation}
+
+        and 
+
+        \begin{equation}
+            X_{odd}(k) = \sum_{n=0}^{N/2-1} x(2n+1) e^{-j2\pi kn/(N/2)}
+        \end{equation}
+    
+        \begin{equation}
+            X(k) = X_{even}(k) + e^{-j2\pi k/N} X_{odd}(k)
+        \end{equation}
+
+        Because of the peridicity of the complex exponential function, to different values of \( k \) can be calculated by:
+
+        \begin{equation}
+            X(k + N/2) = X_{even}(k) - e^{-j2\pi k/N} X_{odd}(k)
+        \end{equation}
+
+        And
+
+        \begin{equation}
+            X(k) = X_{even}(k) + e^{-j2\pi k/N} X_{odd}(k)
+        \end{equation}
+
+        By splitting the DFT into tow smaller DFTs, the number of operations is reduced to \( O(N \log N) \), which makes the FFT algorithm much more efficient for large input sizes.
+
+    \subsection{Windowing}
+    
 
 \section{FLUX Detection}
 
@@ -34,69 +138,67 @@
         It transforms the linear magnitude spectrum into a logarithmic scale,
         which is more aligned with human auditory perception.
 
-    \subsection{Calculation of Spectral Flux}
+     \subsection{Calculation of Spectral Flux}
         The spectral flux is calculated as the difference between the logarithmic magnitude spectra of consecutive frames:
         \begin{equation}
             F(n) = \sum_{k=0}^{N-1} L_n(k) - L_{n-1}(k)
         \end{equation}
         For each frame \( n \), the spectral flux \( F(n) \) is computed by summing the squared differences of the logarithmic magnitude spectra \( L_n(k) \) and \( L_{n-1}(k) \) across all frequency bins \( k \).
         The frames are typically stored in a 2D array where each column represents a frame and each row represents a frequency bin. The difference between consecutive frames can be represented as:
-
-        \[
-        \Delta L(k) = L_n(k) - L_{n-1}(k)
-        \]
+        \begin{equation}
+            \Delta L(k) = L_n(k) - L_{n-1}(k)
+        \end{equation}
         Example of a 2D array representing frames and frequency bins:
         \[
         \mathbf{L} =
         \begin{bmatrix}
-            1 & 2 & 3 & 6 \\
-            1 & 2 & 3 & 6 \\
-            1 & 2 & 3 & 6
+                1 & 4 & 1 & 6 \\
+                3 & 2 & 2 & 1 \\
+                1 & 5 & 3 & 6
         \end{bmatrix}
         \]
         The resulting difference between consecutive frames is:
         \[
         \Delta \mathbf{L} =
         \begin{bmatrix}
-            2 & 3 & 6 \\
-            2 & 3 & 6 \\
-            2 & 3 & 6
+                4 & 1 & 6 \\
+                2 & 2 & 1 \\
+                5 & 3 & 6
         \end{bmatrix} 
         -
         \begin{bmatrix}
-            1 & 2 & 3 \\
-            1 & 2 & 3 \\
-            1 & 2 & 3
+                1 & 4 & 1 \\
+                3 & 2 & 2 \\
+                1 & 5 & 3
         \end{bmatrix} 
         =
         \begin{bmatrix}
-            1 & 1 & 3 \\
-            1 & 1 & 3 \\
-            1 & 1 & 3
+                3 & -3 & 5 \\
+                -1 & 0 & -1 \\
+                4 & -2 & 3
         \end{bmatrix}
-         \]
+            \]
         Then, the spectral flux is computed by summing these differences across all frequency bins for each frame:
+        \begin{equation}
+            F(n) = \sum_{k} |\Delta L(k)|
+        \end{equation}
         \[
-        F(n) = \sum_{k} |\Delta L(k)|
-        \]
-
-        \[ 
         \mathbf{F} =
         \begin{bmatrix}
-            1+1+3 &
-            1+1+3 &
-            1+1+3
+            |3| + |(-1)| + |4| &
+            |(-3)| + |0| + |(-2)| &
+            |5| + |(-1)| + |3|
         \end{bmatrix}^T
         =
         \begin{bmatrix}
-            5  & 5 &  5
-        \end{bmatrix}^T
-        \]  
-         The Code to calculate the spectral flux from the differences is as follows:
-         \small
-         \begin{verbatim}
-         flux = np.sum((calculated_FLUX[:, 1:] - calculated_FLUX[:, :-1]))
-         \end{verbatim}
+            8 & 5 & 9
+            \end{bmatrix}^T
+            \]
+        The Code to calculate the spectral flux from the differences is as follows:
+        \small
+ \begin{lstlisting}
+flux = np.sum((calculated_FLUX[:, 1:] - calculated_FLUX[:, :-1]))   
+ \end{lstlisting}
          \normalsize
 
     \subsection{Half-Wave Rectification}
@@ -129,8 +231,126 @@
                 3 & 7 & 5
             \end{bmatrix}^T
         \]
+\newpage
+\section{Onset Detection}
+    Onset detection is an essential processing step within the pipeline. The goal of this procedure is to identify the exact timings (onsets) of musical events. In the case of drum detection, drum hits are identified, from a novelty function, which is the calculated positive spectral flux.\\
+    Consequently, a peak is only registered if three criteria are met simultaneously:
+    \begin{enumerate}
+        \item \textbf{Amplitude:} The signal must be loud enough and exceed the local adaptive threshold.
+        \item \textbf{Local Maximum:} The considered point must have a larger value than its direct temporal neighbors (the frame before and after).
+        \item \textbf{De-bouncing (Minimum Distance):} A single musical event can cause fluctuations over several frames. To avoid multiple detections of the same beat, a defined waiting time (\texttt{wait}) must be maintained between two detected peaks.
+    \end{enumerate}
+\newpage
+    \subsection{Adaptive Threshold and offset}
+        An adaptive threshold follows the rough envelope of the signal. Typically, a moving average is calculated over a time window of a defined size for this purpose. The moving average serves to smooth the spectral flux and forms the basis of the adaptive threshold. Mathematically, the filter can be described as a discrete convolution of the input signal with a filter kernel.\\
+        Let $x[n]$ be the discrete-time input signal (the spectral flux at frame $n$) and $N$ the window size (\texttt{window\_size}). The output of the filter $y[n]$ is the unweighted mean of the $N$ adjacent samples.\\
+        The centered calculation (corresponding to the \texttt{mode='same'} parameter in the code) can be expressed by the following sum formula:
+\begin{equation}
+    y[n] = \frac{1}{N} \sum_{k = -\lfloor \frac{N}{2} \rfloor}^{\lfloor \frac{N-1}{2} \rfloor} x[n+k]
+\end{equation}\\
+In signal processing, this operation is typically formulated as a discrete convolution. The signal $x[n]$ is convolved with the impulse response (the kernel) $h[n]$:
+\begin{equation}
+    y[n] = (x * h)[n] = \sum_{k=-\infty}^{\infty} x[k] \cdot h[n-k]
+\end{equation}\\
+The filter kernel $h[n]$ is a rectangular window of length $N$, where all values are equally weighted. This corresponds to the code line \texttt{kernel = np.ones(window\_size) / window\_size}:
+\begin{equation}
+    h[n] = 
+    \begin{cases} 
+        \frac{1}{N} & \text{for } 0 \leq n < N \\ 
+        0 & \text{otherwise} 
+    \end{cases}
+\end{equation}\\
+Through this convolution operation, short-term noise is suppressed and the fundamental dynamic envelope (the trend) of the signal is extracted, onto which the offset for the final threshold is subsequently added.
+To prevent background noise (noise floor) from being falsely detected as a peak, an offset (delta) is added to this average. This offset can be static or dynamically adapt to signal blocks.\newline In the present implementation, the moving average is realized by a mathematical convolution (\texttt{np.convolve}) of the flux with a uniformly distributed kernel. The offset is calculated and added block-wise:
 
-\section{Peak Detection}
+\begin{lstlisting}
+def calculate_adaptive_threshold(self, window_size):
+    # Filter kernel for moving average
+    kernel = np.ones(window_size) / window_size
+    moving_avg = np.convolve(self.flux, kernel, mode='same')
+    
+    # Calculate and add offset (delta)
+    deltas = self.calculate_delta(window_size, 3)
+    for i in range(len(moving_avg)):
+        delta_index = int(i / window_size)
+        if delta_index < len(deltas):
+            moving_avg[i] += deltas[delta_index]
+
+    self.threshold_curve = moving_avg
+    return self.threshold_curve
+
+def calculate_delta(self, window_size, multiplier):
+    # Block-wise calculation of the noise offset
+    len_flux = len(self.flux)
+    delta_values = np.zeros(int(np.ceil(len_flux/window_size)))
+    for i in range(len(delta_values)):
+        start = i * window_size
+        end = min((i + 1) * window_size, len_flux)
+        delta_values[i] = np.mean(self.flux[start:end]) * multiplier
+    return delta_values
+\end{lstlisting}
+\newpage
+                \subsection{Identification of Peaks (Peak Picking)}
+                Once the threshold curve is available, the algorithm iterates through the signal. At each point, it checks whether the current value exceeds the threshold, whether it is the tip of a local hill, and whether the time distance to the last detected peak is large enough (de-bouncing).\\
+                This can be implemented very directly as a loop with conditional checks.
+
+\begin{lstlisting}
+def find_peaks(self, window_size, wait):
+    thresholds = self.calculate_adaptive_threshold(window_size)
+    found_peaks = []
+    last_peak_index = -wait  # Initialization for debouncing
+    n_frames = len(self.flux)
+
+    for i in range(1, n_frames - 1):
+        current_val = self.flux[i]
+        current_thresh = thresholds[i]
+        
+        # Condition 1: Above the threshold?
+        if current_val > current_thresh:
+            # Condition 2: Local maximum?
+            if current_val > self.flux[i-1] and current_val > self.flux[i+1]:
+                # Condition 3: Debouncing time expired?
+                if (i - last_peak_index) > wait:
+                    found_peaks.append(i)
+                    last_peak_index = i
+    
+    self.onsets = np.array(found_peaks)
+    return self.onsets
+\end{lstlisting}
+
+                        \subsection{Practical Application}
+                        The parameters for window size (\texttt{window\_size}) and waiting time (\texttt{wait}) depend heavily on the characteristics of the signal to be analyzed. For percussive, low-frequency instruments like a kick drum, different parameters are often chosen compared to high-frequency, fast instruments like a hi-hat.
+\newpage
+
+
+\section{MIDI Export}
+The final step in the pipeline is the translation of the detected onset times into a standard musical format (MIDI).
+
+\subsection{Library and Input Parameters}
+To construct and write the MIDI files, the Python library \texttt{mido} is used. Generating an accurate MIDI sequence requires translating the algorithmic time units (FFT frames) back into absolute real-time units (seconds) and eventually into MIDI ticks.\\
+Therefore, the export function requires the following parameters from the preceding signal processing stages:
+\begin{itemize}
+    \item \textbf{Onset Frames:} The arrays containing the identified frame indices for each instrument (\texttt{kick\_frames}, \texttt{snare\_frames}, \texttt{hihat\_frames}).
+    \item \textbf{Sample Rate and Hop Length:} The \texttt{sample\_rate} of the original audio and the \texttt{hop\_length} used during the FFT. These are mathematically essential to convert the frame indices into precise time stamps in seconds.
+    \item \textbf{BPM (Beats Per Minute):} A defined tempo used to calculate the correct MIDI ticks per beat.
+\end{itemize}
+
+\subsection{Output Configuration}
+The generated output is a multi-track MIDI file. To ensure compatibility with standard digital audio workstations (DAWs) and synthesizers, the export maps the data according to the General MIDI (GM) standard:
+\begin{itemize}
+    \item \textbf{Routing:} All generated events are routed to MIDI Channel 10 (indexed internally as channel 9), which is the standard channel reserved for percussion and drums.
+    \item \textbf{Track Separation and Note Mapping:} The exporter creates three separate tracks within the file. Each track represents one specific drum element and triggers a designated MIDI note number:
+    \begin{itemize}
+        \item \textbf{Kick Drum:} Note 36
+        \item \textbf{Snare Drum:} Note 38
+        \item \textbf{Closed Hi-Hat:} Note 42
+    \end{itemize}
+\end{itemize}
+This structured output allows the user to simply import the final \texttt{.mid} file into any audio software and play it back using virtual drum samplers.
+
+\section{Deep Learning based Source Separation}
+
+
 
 \section{Fazit}
 Hier steht das Fazit.
