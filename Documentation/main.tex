@@ -20,10 +20,48 @@
 \newpage
 
 \section{Audio Import}
+    \subsection{Noise Gate}
 
 \section{FFT Analyse}
+    \subsection{FFT Algorithm}
+        The Fast Fourier Transform (FFT) algorithm is used for computing the Discrete Fourier Transform (DFT) of a sequence. 
+        The DFT of a sequence \( x(n) \) of length \( N \) is defined as:
 
-\section{FLUX Detection}
+        \begin{equation}
+            X(k) = \sum_{n=0}^{N-1} x(n) e^{-j2\pi kn/N}
+        \end{equation}
+        For every frequency bin \( k \), the DFT computes a complex number \( X(k) \) that represents the amplitude and phase of the corresponding frequency component in the input signal.
+        To calculate \(N\) coefficients, \(O(N^2)\) operations are required.This is because for each of the N output values, a sum of N terms must be computed. 
+        
+
+        The FFT algorithm separates the DFT into smaller DFTs, by recursively dividing the input sequence into even and odd indexed elements.
+
+        \begin{equation}
+            X(k) = \sum_{n=0}^{N/2-1} x(2n) e^{-j2\pi k(2n)/N} + \sum_{n=0}^{N/2-1} x(2n+1) e^{-j2\pi k(2n+1)/N}
+        \end{equation}
+
+        For better understanding, the even and odd indexed elements can be represented as, by using the substitution:
+
+        \begin{equation}
+            X_{even}(k) = \sum_{n=0}^{N/2-1} x(2n) e^{-j2\pi kn/(N/2)}
+        \end{equation}
+
+        and 
+
+        \begin{equation}
+            X_{odd}(k) = \sum_{n=0}^{N/2-1} x(2n+1) e^{-j2\pi kn/(N/2)}
+        \end{equation}
+
+    
+        \begin{equation}
+            X(k) = \sum_{n=0}^{N/2-1} x(2n) e^{-j2\pi kn/(N/2)} + e^{-j2\pi k/N} \sum_{n=0}^{N/2-1} x(2n+1) e^{-j2\pi kn/(N/2)}
+        \end{equation}
+
+
+    \subsection{Windowing}
+    
+
+    \section{FLUX Detection}
 
     \subsection{Calculation of Logarithmic Magnitude Spectrum}
 
@@ -41,57 +79,55 @@
         \end{equation}
         For each frame \( n \), the spectral flux \( F(n) \) is computed by summing the squared differences of the logarithmic magnitude spectra \( L_n(k) \) and \( L_{n-1}(k) \) across all frequency bins \( k \).
         The frames are typically stored in a 2D array where each column represents a frame and each row represents a frequency bin. The difference between consecutive frames can be represented as:
-
-        \[
-        \Delta L(k) = L_n(k) - L_{n-1}(k)
-        \]
+        \begin{equation}
+            \Delta L(k) = L_n(k) - L_{n-1}(k)
+        \end{equation}
         Example of a 2D array representing frames and frequency bins:
         \[
         \mathbf{L} =
         \begin{bmatrix}
-            1 & 2 & 3 & 6 \\
-            1 & 2 & 3 & 6 \\
-            1 & 2 & 3 & 6
+                1 & 4 & 1 & 6 \\
+                3 & 2 & 2 & 1 \\
+                1 & 5 & 3 & 6
         \end{bmatrix}
         \]
         The resulting difference between consecutive frames is:
         \[
         \Delta \mathbf{L} =
         \begin{bmatrix}
-            2 & 3 & 6 \\
-            2 & 3 & 6 \\
-            2 & 3 & 6
+                4 & 1 & 6 \\
+                2 & 2 & 1 \\
+                5 & 3 & 6
         \end{bmatrix} 
         -
         \begin{bmatrix}
-            1 & 2 & 3 \\
-            1 & 2 & 3 \\
-            1 & 2 & 3
+                1 & 4 & 1 \\
+                3 & 2 & 2 \\
+                1 & 5 & 3
         \end{bmatrix} 
         =
         \begin{bmatrix}
-            1 & 1 & 3 \\
-            1 & 1 & 3 \\
-            1 & 1 & 3
+                3 & -3 & 5 \\
+                -1 & 0 & -1 \\
+                4 & -2 & 3
         \end{bmatrix}
          \]
         Then, the spectral flux is computed by summing these differences across all frequency bins for each frame:
+        \begin{equation}
+            F(n) = \sum_{k} |\Delta L(k)|
+        \end{equation}
         \[
-        F(n) = \sum_{k} |\Delta L(k)|
-        \]
-
-        \[ 
         \mathbf{F} =
         \begin{bmatrix}
-            1+1+3 &
-            1+1+3 &
-            1+1+3
+            |3| + |(-1)| + |4| &
+            |(-3)| + |0| + |(-2)| &
+            |5| + |(-1)| + |3|
         \end{bmatrix}^T
         =
         \begin{bmatrix}
-            5  & 5 &  5
+            8 & 5 & 9
         \end{bmatrix}^T
-        \]  
+        \]
          The Code to calculate the spectral flux from the differences is as follows:
          \small
          \begin{verbatim}
@@ -131,6 +167,12 @@
         \]
 
 \section{Peak Detection}
+
+\section{Filtering}
+
+\section{MIDI Export}
+
+\section{Deep Learning based Source Separation}
 
 \section{Fazit}
 Hier steht das Fazit.
