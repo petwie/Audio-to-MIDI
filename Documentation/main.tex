@@ -124,6 +124,13 @@ The project was implemented using a strict object-oriented programming (OOP) app
 This approach ensures a strict separation of concerns. The respective data state, such as the current audio array, STFT calculations, or detected peaks, is stored as an attribute of the corresponding object. This avoids global variables and significantly simplifies parameter passing between the different processing steps.\\
 The following section details the modular structure of the Python files and the role of each class:
 
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=1.1\textwidth]{class_diagram.png}
+    \caption{Class diagram of the Audio-to-MIDI object-oriented architecture.}
+    \label{fig:class_diagram}
+\end{figure}
+
 \begin{description}
     \item[\texttt{main.py}:] This file serves as the central entry point of the application. Here, the main controller class \texttt{AudioToMidi} is instantiated, initialized with the file paths for the different drum components (kick, snare, hi-hat), and the automated processing pipeline is started.
     
@@ -166,45 +173,66 @@ After the signal has been successfully loaded, noise reduction is applied to rem
             X(k) = \sum_{n=0}^{N-1} x(n) e^{-j2\pi kn/N}
         \end{equation}
         For every frequency bin $k$, the DFT computes a complex number $X(k)$ that represents the amplitude and phase of the corresponding frequency component in the input signal.
-        To calculate $N$ coefficients, $O(N^2)$ operations are required. This is because for each of the N output values, a sum of N terms must be computed. 
+        To calculate $N$ coefficients, $O(N^2)$ operations are required. This is because each of the 
+        N output coefficients requires the computation of a sum containing N terms.
 
-        The FFT algorithm separates the DFT into smaller DFTs, by recursively dividing the input sequence into even and odd indexed elements.
+        \noindent The FFT algorithm separates the DFT into smaller DFTs, by recursively dividing the input sequence into even and odd indexed elements.
 
         \begin{equation}
             X(k) = \sum_{n=0}^{N/2-1} x(2n) e^{-j2\pi k(2n)/N} + \sum_{n=0}^{N/2-1} x(2n+1) e^{-j2\pi k(2n+1)/N}
         \end{equation}
 
-        For better understanding, the even and odd indexed elements can be represented as, by using the substitution:
+        \noindent For better understanding, the even and odd indexed elements can be represented as, by using the substitution:
 
         \begin{equation}
             X_{even}(k) = \sum_{n=0}^{N/2-1} x(2n) e^{-j2\pi kn/(N/2)}
-        \end{equation}
-
-        and 
-
-        \begin{equation}
+            .
             X_{odd}(k) = \sum_{n=0}^{N/2-1} x(2n+1) e^{-j2\pi kn/(N/2)}
+
         \end{equation}
+
+        \noindent to get the following expression for the DFT coefficients:
     
         \begin{equation}
             X(k) = X_{even}(k) + e^{-j2\pi k/N} X_{odd}(k)
         \end{equation}
 
-        Because of the periodicity of the complex exponential function, two different values of $k$ can be calculated by:
+        \noindent Because of the periodicity properties of the complex exponential function, the second half of the spectrum can be derived directly from the same intermediate results. 
+        By substituting $k + N/2$ into the exponential term, the following relation is obtained:
+
+        \begin{align}
+            e^{-j2\pi (k+N/2)/N}
+            &= e^{-j2\pi k/N} \, e^{-j2\pi (N/2)/N} \\
+            &= e^{-j2\pi k/N} \, e^{-j\pi} \\
+            &= -e^{-j2\pi k/N}
+            \end{align}
+        \noindent This sign change leads to a second expression for the Fourier coefficients:
 
         \begin{equation}
             X(k + N/2) = X_{even}(k) - e^{-j2\pi k/N} X_{odd}(k)
-        \end{equation}
-
-        And
-
-        \begin{equation}
+            ,
             X(k) = X_{even}(k) + e^{-j2\pi k/N} X_{odd}(k)
         \end{equation}
-
-        By splitting the DFT into two smaller DFTs, the number of operations is reduced to $O(N \log N)$, which makes the FFT algorithm much more efficient for large input sizes.
+        
+        \noindent By recursively applying this decomposition, the DFT can be computed in \( O(N \log N) \) time,
+        which is a significant improvement over the naive \( O(N^2) \) approach.
 
     \subsection{Windowing}
+        To generate the spectrogram, the input signal is divided into overlapping frames, and a window function is applied to each frame to minimize spectral leakage.
+        Common window functions include Hanning, Hamming, and Blackman windows.
+        
+        \noindent The result is a 2D array where each column represents the magnitude spectrum of a frame, and each row corresponds to a specific frequency bin.
+
+        \noindent Example of a 2D array representing frames and frequency bins:
+        \[
+        \mathbf{L} =
+        \begin{bmatrix}
+                1 & 4 & 1 & 6 \\
+                3 & 2 & 2 & 1 \\
+                1 & 5 & 3 & 6
+        \end{bmatrix}
+        \]
+        \noindent This array can be visualized as a spectrogram, showing how the frequency content of the signal evolves over time.
     
 
 \section{FLUX Detection}
