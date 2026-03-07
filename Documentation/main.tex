@@ -36,7 +36,45 @@
 \tableofcontents
 \newpage
 
+\section{Project Description}
+
+\subsection{Goal and Motivation}
+The primary motivation behind this project is to develop a tool capable of extracting the kick drum, snare drum, and hi-hat from an existing audio track or drum loop, and translating their rhythmic patterns into a standard MIDI format.\\
+Often, musicians and producers encounter inspiring drum breaks or rhythms in existing songs but lack the individual MIDI notes to easily manipulate or recreate them. By extracting these rhythmic components and converting them into MIDI, users are empowered to isolate the groove, apply it to their own virtual drum samplers, alter the rhythm for new compositions, or simply generate an accurate rhythmic notation of the original performance.
+
+\subsection{Software and Libraries}
+The software development for this project was conducted using \textbf{Visual Studio Code (VS Code)} as the primary Integrated Development Environment (IDE).\\
+To achieve the complex task of audio separation and analysis, a combination of machine learning models and digital signal processing libraries was employed:
+
+\begin{itemize}
+    \item \textbf{Deep Learning Source Separation (PyTorch \& TorchAudio):} To isolate the complete drum stem from a full, mixed song, a pre-trained neural network was utilized. Specifically, the project uses the \texttt{HDEMUCS\_HIGH\_MUSDB\_PLUS} model provided by the\\ \texttt{torchaudio.pipelines} module. This model separates the audio into discrete stems (vocals, drums, bass, other) using PyTorch for tensor operations and GPU acceleration when available.
+    \item \textbf{Individual Drum Extraction:} After isolating the overall drum stem, the tool \textbf{Rebeat} (\url{https://rebeatapp.com/}) was used to further separate this stem into the individual percussive components (kick, snare, and hi-hat).
+\end{itemize}
+For the core algorithmic pipeline (Audio-to-MIDI translation), the following Python libraries were implemented:
+\begin{itemize}
+    \item \textbf{Librosa:} Used for loading the audio files, preprocessing, and calculating the Short-Time Fourier Transform (STFT).
+    \item \textbf{NumPy:} Essential for handling all multidimensional arrays and performing the mathematical calculations required for the spectral flux and adaptive peak picking.
+    \item \textbf{Matplotlib:} Utilized for the visual evaluation of the algorithms, allowing the plotting of spectrograms, spectral flux curves, and the detected peak onsets.
+    \item \textbf{Mido:} A library dedicated to MIDI handling. It translates the algorithmically determined temporal events (in seconds or frames) into standard MIDI messages (ticks, Note On/Off) and exports the multi-track \texttt{.mid} file.
+\end{itemize}
+\newpage
+\section{Software Architecture}
+
+\subsection{Signal Processing Pipeline}
+
 \section{Audio Import}
+The first step in the pipeline is loading and preprocessing the audio files.
+
+\subsection{Loading Audio Data}
+The Python library \texttt{librosa} is used for the actual loading of the audio data. The \texttt{load\_audio} method reads the specified file, converts it to a mono signal by default, and uses a target sample rate of 44100 Hz. 
+
+\subsection{Noise Gate}
+After the signal has been successfully loaded, noise reduction is applied to remove background noise in quiet passages. This is realized by the \texttt{noise\_gate} method, which cuts off all values below a certain threshold and sets them to 0. The noise gate threshold is calculated dynamically using percentiles.
+\begin{enumerate}
+    \item To obtain an envelope of the signal, the absolute values of the array are first computed: $\text{env} = |\text{self.audio\_array}|$.
+    \item The threshold is then defined as the 90th percentile of this envelope using the \texttt{np.percentile(env, 90)} function. This means the threshold is set so that 90\% of the signal's amplitude values fall below it, effectively isolating the loudest 10\% of the audio (the actual drum hits).
+    \item Finally, using the \texttt{np.where} function, all signal components whose absolute magnitude is smaller than this calculated threshold are filtered out and overwritten with zero. 
+\end{enumerate}
 
 \section{FFT Analyse}
     \subsection{FFT Algorithm}
@@ -281,12 +319,34 @@ def find_peaks(self, window_size, wait):
 \end{lstlisting}
 
                         \subsection{Practical Application}
-                        The parameters for window size (\texttt{window\_size}) and waiting time (\texttt{wait}) depend heavily on the characteristics of the signal to be analyzed. For percussive, low-frequency instruments like a kick drum, different parameters are often chosen compared to high-frequency, fast instruments like a hi-hat.\\
-                        In an exemplary use case, a window size of 16 is used for the kick and snare, for instance, while the more densely played hi-hat is smoothed with a window size of 32, both maintaining the same de-bouncing wait time of 4 frames.
+                        The parameters for window size (\texttt{window\_size}) and waiting time (\texttt{wait}) depend heavily on the characteristics of the signal to be analyzed. For percussive, low-frequency instruments like a kick drum, different parameters are often chosen compared to high-frequency, fast instruments like a hi-hat.
 \newpage
 
 
 \section{MIDI Export}
+The final step in the pipeline is the translation of the detected onset times into a standard musical format (MIDI).
+
+\subsection{Library and Input Parameters}
+To construct and write the MIDI files, the Python library \texttt{mido} is used. Generating an accurate MIDI sequence requires translating the algorithmic time units (FFT frames) back into absolute real-time units (seconds) and eventually into MIDI ticks.\\
+Therefore, the export function requires the following parameters from the preceding signal processing stages:
+\begin{itemize}
+    \item \textbf{Onset Frames:} The arrays containing the identified frame indices for each instrument (\texttt{kick\_frames}, \texttt{snare\_frames}, \texttt{hihat\_frames}).
+    \item \textbf{Sample Rate and Hop Length:} The \texttt{sample\_rate} of the original audio and the \texttt{hop\_length} used during the FFT. These are mathematically essential to convert the frame indices into precise time stamps in seconds.
+    \item \textbf{BPM (Beats Per Minute):} A defined tempo used to calculate the correct MIDI ticks per beat.
+\end{itemize}
+
+\subsection{Output Configuration}
+The generated output is a multi-track MIDI file. To ensure compatibility with standard digital audio workstations (DAWs) and synthesizers, the export maps the data according to the General MIDI (GM) standard:
+\begin{itemize}
+    \item \textbf{Routing:} All generated events are routed to MIDI Channel 10 (indexed internally as channel 9), which is the standard channel reserved for percussion and drums.
+    \item \textbf{Track Separation and Note Mapping:} The exporter creates three separate tracks within the file. Each track represents one specific drum element and triggers a designated MIDI note number:
+    \begin{itemize}
+        \item \textbf{Kick Drum:} Note 36
+        \item \textbf{Snare Drum:} Note 38
+        \item \textbf{Closed Hi-Hat:} Note 42
+    \end{itemize}
+\end{itemize}
+This structured output allows the user to simply import the final \texttt{.mid} file into any audio software and play it back using virtual drum samplers.
 
 \section{Deep Learning based Source Separation}
 
