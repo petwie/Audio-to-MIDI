@@ -457,6 +457,17 @@ This structured output allows the user to simply import the final \texttt{.mid} 
 
 \section{Conclusion and Outlook}
 
+\noindent
+In this project, a signal processing pipeline was developed to convert drum audio signals into MIDI events. The implemented system combines classical digital signal processing methods such as STFT analysis, spectral flux calculation, and adaptive peak picking in order to detect drum onsets and transfer them into MIDI format.
+
+\noindent
+At the beginning, an attempt was made to separate the individual drum instruments using classical filter techniques based on their typical frequency ranges. However, this approach did not produce reliable results, since the frequency ranges of kick, snare, and hi-hat overlap strongly in real audio recordings. For this reason, an AI-based source separation method was chosen in order to first isolate the drum stem from the complete audio signal.
+
+\noindent
+Nevertheless, this separation was still not perfect. Even after the AI-based processing, the resulting signals still contained noise and overlapping components, which negatively affected the onset detection. Therefore, a noise gate was introduced as an additional preprocessing step to suppress low-amplitude background components and make the actual drum hits more prominent.
+
+\noindent
+Overall, the developed system is capable of generating usable MIDI drum patterns from audio material. At the same time, the results show that perfect separation and detection remain challenging. Future improvements could be achieved through more advanced separation models or more robust detection methods.
 \section{References}
 
 \end{document}
