@@ -303,6 +303,13 @@ After the signal has been successfully loaded, noise reduction is applied to rem
             \end{bmatrix}^T
             \]
         The Code to calculate the spectral flux from the differences is as follows:
+        \begin{figure}[htpb]
+            \centering
+            \includegraphics[width=0.8\textwidth]{spectral_flux.png}
+            \caption{Visualization of the spectral flux calculation.}
+            \label{fig:spectral_flux}
+        \end{figure}
+
         \small
 \begin{lstlisting}
 flux = np.sum((calculated_FLUX[:, 1:] - calculated_FLUX[:, :-1]))   
@@ -339,7 +346,14 @@ flux = np.sum((calculated_FLUX[:, 1:] - calculated_FLUX[:, :-1]))
                 3 & 7 & 5
             \end{bmatrix}^T
         \]
-\newpage
+        \begin{figure}[htpb]
+            \centering
+            \includegraphics[width=0.8\textwidth]{positive_spectral_flux.png}
+            \caption{Visualization of the positive spectral flux (half-wave rectification).}
+            \label{fig:positive_spectral_flux}
+        \end{figure}
+
+        \newpage
 \section{Onset Detection}
     Onset detection is an essential processing step within the pipeline. The goal of this procedure is to identify the exact timings (onsets) of musical events. In the case of drum detection, drum hits are identified, from a novelty function, which is the calculated positive spectral flux.\\
     Consequently, a peak is only registered if three criteria are met simultaneously:
@@ -424,7 +438,14 @@ def find_peaks(self, window_size, wait):
     
     self.onsets = np.array(found_peaks)
     return self.onsets
-\end{lstlisting}
+    \end{lstlisting}
+
+    \begin{figure}[htpb]
+        \centering
+        \includegraphics[width=0.8\textwidth]{peak_picking.png}
+        \caption{Visualization of the peak picking algorithm with adaptive threshold.}
+        \label{fig:peak_picking}
+    \end{figure}
 
                         \subsection{Practical Application}
                         The parameters for window size (\texttt{window\_size}) and waiting time (\texttt{wait}) depend heavily on the characteristics of the signal to be analyzed. For percussive, low-frequency instruments like a kick drum, different parameters are often chosen compared to high-frequency, fast instruments like a hi-hat.
