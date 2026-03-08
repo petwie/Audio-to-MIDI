@@ -152,6 +152,12 @@ The following section details the modular structure of the Python files and the 
 \newpage
 \section{Audio Import}
 The first step in the pipeline is loading and preprocessing the audio files.
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=1\textwidth]{IsolatedAudio.png}
+    \caption{Waveforms of the different isolations states.}
+    \label{fig:import_waveforms}
+\end{figure}
 
 \subsection{Loading Audio Data}
 The Python library \texttt{librosa} is used for the actual loading of the audio data. The \texttt{load\_audio} method reads the specified file, converts it to a mono signal by default, and uses a target sample rate of 44100 Hz. 
@@ -173,51 +179,45 @@ After the signal has been successfully loaded, noise reduction is applied to rem
             X(k) = \sum_{n=0}^{N-1} x(n) e^{-j2\pi kn/N}
         \end{equation}
         For every frequency bin $k$, the DFT computes a complex number $X(k)$ that represents the amplitude and phase of the corresponding frequency component in the input signal.
-        To calculate $N$ coefficients, $O(N^2)$ operations are required. This is because each of the 
-        N output coefficients requires the computation of a sum containing N terms.
+        To calculate $N$ coefficients, $O(N^2)$ operations are required. This is because for each of the N output values, a sum of N terms must be computed. 
 
-        \noindent The FFT algorithm separates the DFT into smaller DFTs, by recursively dividing the input sequence into even and odd indexed elements.
+        The FFT algorithm separates the DFT into smaller DFTs, by recursively dividing the input sequence into even and odd indexed elements.
 
         \begin{equation}
             X(k) = \sum_{n=0}^{N/2-1} x(2n) e^{-j2\pi k(2n)/N} + \sum_{n=0}^{N/2-1} x(2n+1) e^{-j2\pi k(2n+1)/N}
         \end{equation}
 
-        \noindent For better understanding, the even and odd indexed elements can be represented as, by using the substitution:
+        For better understanding, the even and odd indexed elements can be represented as, by using the substitution:
 
         \begin{equation}
             X_{even}(k) = \sum_{n=0}^{N/2-1} x(2n) e^{-j2\pi kn/(N/2)}
-            .
-            X_{odd}(k) = \sum_{n=0}^{N/2-1} x(2n+1) e^{-j2\pi kn/(N/2)}
-
         \end{equation}
 
-        \noindent to get the following expression for the DFT coefficients:
+        and 
+
+        \begin{equation}
+            X_{odd}(k) = \sum_{n=0}^{N/2-1} x(2n+1) e^{-j2\pi kn/(N/2)}
+        \end{equation}
     
         \begin{equation}
             X(k) = X_{even}(k) + e^{-j2\pi k/N} X_{odd}(k)
         \end{equation}
 
-        \noindent Because of the periodicity properties of the complex exponential function, the second half of the spectrum can be derived directly from the same intermediate results. 
-        By substituting $k + N/2$ into the exponential term, the following relation is obtained:
-
-        \begin{align}
-            e^{-j2\pi (k+N/2)/N}
-            &= e^{-j2\pi k/N} \, e^{-j2\pi (N/2)/N} \\
-            &= e^{-j2\pi k/N} \, e^{-j\pi} \\
-            &= -e^{-j2\pi k/N}
-            \end{align}
-        \noindent This sign change leads to a second expression for the Fourier coefficients:
+        Because of the periodicity of the complex exponential function, two different values of $k$ can be calculated by:
 
         \begin{equation}
             X(k + N/2) = X_{even}(k) - e^{-j2\pi k/N} X_{odd}(k)
-            ,
+        \end{equation}
+
+        And
+
+        \begin{equation}
             X(k) = X_{even}(k) + e^{-j2\pi k/N} X_{odd}(k)
         \end{equation}
-        
-        \noindent By recursively applying this decomposition, the DFT can be computed in \( O(N \log N) \) time,
-        which is a significant improvement over the naive \( O(N^2) \) approach.
 
-    \subsection{Windowing}
+        By splitting the DFT into two smaller DFTs, the number of operations is reduced to $O(N \log N)$, which makes the FFT algorithm much more efficient for large input sizes.
+
+     \subsection{Windowing}
         To generate the spectrogram, the input signal is divided into overlapping frames, and a window function is applied to each frame to minimize spectral leakage.
         Common window functions include Hanning, Hamming, and Blackman windows.
         
@@ -302,14 +302,14 @@ After the signal has been successfully loaded, noise reduction is applied to rem
             8 & 5 & 9
             \end{bmatrix}^T
             \]
-        The Code to calculate the spectral flux from the differences is as follows:
+
         \begin{figure}[htpb]
             \centering
             \includegraphics[width=0.8\textwidth]{spectral_flux.png}
             \caption{Visualization of the spectral flux calculation.}
             \label{fig:spectral_flux}
         \end{figure}
-
+        The Code to calculate the spectral flux from the differences is as follows:
         \small
 \begin{lstlisting}
 flux = np.sum((calculated_FLUX[:, 1:] - calculated_FLUX[:, :-1]))   
@@ -352,8 +352,7 @@ flux = np.sum((calculated_FLUX[:, 1:] - calculated_FLUX[:, :-1]))
             \caption{Visualization of the positive spectral flux (half-wave rectification).}
             \label{fig:positive_spectral_flux}
         \end{figure}
-
-        \newpage
+\newpage
 \section{Onset Detection}
     Onset detection is an essential processing step within the pipeline. The goal of this procedure is to identify the exact timings (onsets) of musical events. In the case of drum detection, drum hits are identified, from a novelty function, which is the calculated positive spectral flux.\\
     Consequently, a peak is only registered if three criteria are met simultaneously:
@@ -438,17 +437,17 @@ def find_peaks(self, window_size, wait):
     
     self.onsets = np.array(found_peaks)
     return self.onsets
-    \end{lstlisting}
+\end{lstlisting}
 
-    \begin{figure}[htpb]
+\begin{figure}[htpb]
         \centering
-        \includegraphics[width=0.8\textwidth]{peak_picking.png}
-        \caption{Visualization of the peak picking algorithm with adaptive threshold.}
+        \includegraphics[width=1\textwidth]{peak_picking.png}
+        \caption{Visualization of the peak picking algorithm.}
         \label{fig:peak_picking}
     \end{figure}
-
-                        \subsection{Practical Application}
-                        The parameters for window size (\texttt{window\_size}) and waiting time (\texttt{wait}) depend heavily on the characteristics of the signal to be analyzed. For percussive, low-frequency instruments like a kick drum, different parameters are often chosen compared to high-frequency, fast instruments like a hi-hat.
+    \newpage
+    \subsection{Practical Application}
+    The parameters for window size (\texttt{window\_size}) and waiting time (\texttt{wait}) depend heavily on the characteristics of the signal to be analyzed. For percussive, low-frequency instruments like a kick drum, different parameters are often chosen compared to high-frequency, fast instruments like a hi-hat.
 \newpage
 
 \section{MIDI Export}
@@ -490,5 +489,32 @@ Nevertheless, this separation was still not perfect. Even after the AI-based pro
 \noindent
 Overall, the developed system is capable of generating usable MIDI drum patterns from audio material. At the same time, the results show that perfect separation and detection remain challenging. Future improvements could be achieved through more advanced separation models or more robust detection methods.
 \section{References}
+\begin{thebibliography}{99}
+
+\bibitem{librosa}
+Librosa Developers, \emph{Librosa documentation}, [Online]. Available: \url{https://librosa.org/doc/main/index.html}.
+
+\bibitem{matplotlib}
+Matplotlib Developers, \emph{Matplotlib Documentation}, [Online]. Available: \url{https://matplotlib.org/}.
+
+\bibitem{numpy}
+NumPy Developers, \emph{NumPy Documentation}, [Online]. Available: \url{https://numpy.org/devdocs/index.html}.
+
+\bibitem{pytorch}
+PyTorch Developers, \emph{PyTorch Documentation}, [Online]. Available: \url{https://pytorch.org/}.
+
+\bibitem{rebeat}
+Rebeat Developers, \emph{Rebeat App and documentation}, [Online]. Available: \url{https://rebeatapp.com/}.
+
+\bibitem{scipy}
+SciPy Developers, \emph{Scipy Documentation}, [Online]. Available: \url{https://docs.scipy.org/doc/scipy/index.html}.
+
+\bibitem{smp_materials}
+Prof. Dr. Harald Elders-Boll, Prof. Dr. Christoph Pörschmann, Prof. Dr. Uwe Dettmar, \emph{Lecture and laboratory materials for the module SMP}.
+
+\bibitem{torchaudio}
+Torchaudio developers, \emph{Hybrid Demucs Tutorial}, [Online]. Available: \url{https://docs.pytorch.org/audio/2.8/tutorials/hybrid_demucs_tutorial.html}.
+
+\end{thebibliography}
 
 \end{document}
