@@ -1,4 +1,7 @@
-\documentclass[a4paper,11pt]{article}
+\documentclass[aspectratio=169]{beamer}
+
+\usetheme{Madrid}
+\usecolortheme{default}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -11,10 +14,10 @@
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc}
 
-% Python-Style for Listings
+% Python style
 \lstdefinestyle{python}{
     language=Python,
-    basicstyle=\ttfamily\small,
+    basicstyle=\ttfamily\scriptsize,
     keywordstyle=\color{blue}\bfseries,
     stringstyle=\color{red},
     commentstyle=\color{green!50!black},
@@ -27,489 +30,574 @@
 }
 \lstset{style=python}
 
-\title{Documentation SMP Project \\Audio to MIDI}
-\author{Peter Wienken, Aaron Michael Weis}
+\title{Audio to MIDI}
+\subtitle{SMP Project Presentation}
+\author{Peter Wienken \and Aaron Michael Weis}
 \date{\today}
 
 \begin{document}
 
-\maketitle
-\newpage
-\tableofcontents
-\newpage
+%------------------------------------------------
+\begin{frame}
+    \titlepage
+\end{frame}
 
-\section{Project Description}
-
-\subsection{Goal and Motivation}
-The primary motivation behind this project is to develop a tool capable of extracting the kick drum, snare drum, and hi-hat from an existing audio track or drum loop, and translating their rhythmic patterns into a standard MIDI format.\\
-Often, musicians and producers encounter inspiring drum breaks or rhythms in existing songs but lack the individual MIDI notes to easily manipulate or recreate them. By extracting these rhythmic components and converting them into MIDI, users are empowered to isolate the groove, apply it to their own virtual drum samplers, alter the rhythm for new compositions, or simply generate an accurate rhythmic notation of the original performance.
-
-\subsection{Software and Libraries}
-To achieve the complex task of audio separation and analysis, a combination of machine learning models and digital signal processing libraries was employed.
-The software development for this project was conducted using \textbf{Visual Studio Code (VS Code)} as the primary Integrated Development Environment (IDE).\\
-For the core algorithmic pipeline (Audio-to-MIDI translation), the following Python libraries were implemented:
-\begin{itemize}
-    \item \textbf{Librosa:} Used for loading the audio files, preprocessing, and calculating the Short-Time Fourier Transform (STFT).\cite{librosa}
-    \item \textbf{NumPy:} Essential for handling all multidimensional arrays and performing the mathematical calculations required for the spectral flux and adaptive peak picking.\cite{numpy}
-    \item \textbf{Matplotlib:} Utilized for the visual evaluation of the algorithms, allowing the plotting of spectrograms, spectral flux curves, and the detected peak onsets.\cite{matplotlib}
-    \item \textbf{Mido:} A library dedicated to MIDI handling. It translates the algorithmically determined temporal events (in seconds or frames) into standard MIDI messages (ticks, Note On/Off) and exports the multi-track \texttt{.mid} file.\cite{mido}
-\end{itemize}
-
-\begin{itemize}
-    \item \textbf{Deep Learning Source Separation (PyTorch \& TorchAudio):} To isolate the complete drum stem from a full, mixed song, a pre-trained neural network was utilized. Specifically, the project uses the \texttt{HDEMUCS\_HIGH\_MUSDB\_PLUS}\cite{torchaudio} model provided by the \texttt{torchaudio.pipelines}\cite{pytorch} module. This model separates the audio into discrete stems (vocals, drums, bass, other) using PyTorch for tensor operations and GPU acceleration when available.
-    \item \textbf{Individual Drum Extraction:} After isolating the overall drum stem, the tool \textbf{Rebeat} \cite{rebeat} was used to further separate this stem into the individual percussive components (kick, snare, and hi-hat).
-\end{itemize}
-\newpage
-
-\section{Software Architecture}
-\subsection{Signal Processing Pipeline}
-\begin{figure}[htpb]
-    \centering
-    \begin{tikzpicture}[
-        node distance=0.6cm and 1.5cm,
-        process/.style={rectangle, draw=black, thick, rounded corners, text width=4.5cm, align=center, minimum height=0.9cm, fill=blue!5},
-        algorithm/.style={rectangle, draw=black, thick, rounded corners, text width=4.5cm, align=center, minimum height=0.9cm, fill=orange!10},
-        io/.style={trapezium, trapezium left angle=75, trapezium right angle=105, draw=black, thick, text width=3.5cm, align=center, minimum height=0.9cm, fill=green!10},
-        arrow/.style={-{Stealth[scale=1.2]}, thick, rounded corners}
-    ]
-
-    % --- Left Column: ML & Extraction ---
-    \node[io] (input) {Original Audio Mix};
-    \node[process, below=of input] (demucs) {Deep Learning Separation\\(HDEMUCS)};
-    \node[io, below=of demucs] (drumstem) {Isolated Drum Stem};
-    \node[process, below=of drumstem] (rebeat) {Individual Extraction\\(Rebeat App)};
-    \node[io, below=of rebeat] (elements) {Kick, Snare, Hi-Hat\\Audio Files};
-
-    % --- Right Column: Core Algorithm ---
-    \node[algorithm, right=2cm of input] (import) {1. Audio Import \&\\Noise Gate};
-    \node[algorithm, below=of import] (stft) {2. Time-Frequency\\Analysis (STFT)};
-    \node[algorithm, below=of stft] (flux) {3. Positive Spectral Flux};
-    \node[algorithm, below=of flux] (peaks) {4. Adaptive Peak Picking\\(Onset Detection)};
-    \node[io, below=of peaks] (onsets) {Detected Onsets\\(Frame Indices)};
-    \node[process, below=of onsets] (midi) {5. Multi-Track\\MIDI Export};
-    \node[io, below=of midi] (output) {Final MIDI File\\(.mid)};
-
-    % --- Arrows Col 1 ---
-    \draw[arrow] (input) -- (demucs);
-    \draw[arrow] (demucs) -- (drumstem);
-    \draw[arrow] (drumstem) -- (rebeat);
-    \draw[arrow] (rebeat) -- (elements);
-
-    % --- Arrow between Columns (Snakes from bottom left to top right) ---
-    \draw[arrow, blue] (elements.east) -- ++(0.6,0) |- (import.west);
-
-    % --- Arrows Col 2 ---
-    \draw[arrow] (import) -- (stft);
-    \draw[arrow] (stft) -- (flux);
-    \draw[arrow] (flux) -- (peaks);
-    \draw[arrow] (peaks) -- (onsets);
-    \draw[arrow] (onsets) -- (midi);
-    \draw[arrow] (midi) -- (output);
-
-    % --- Frame for Core Algorithm ---
-    \draw[dashed, thick, gray]
-        ($(import.north west)+(-0.3,0.3)$) rectangle ($(peaks.south east)+(0.3,-0.3)$);
-        
-    % Beschriftung oben mittig
-    \node[gray, anchor=south, font=\small\itshape] 
-        at ($(import.north)+(0, 0.4)$) {Core Algorithm (per Track)};
-
-    \end{tikzpicture}
-    \caption{Flowchart of the complete Audio-to-MIDI Signal Pipeline.}
-    \label{fig:pipeline_flowchart}
-\end{figure}
-\subsection{Object-Oriented Design of the Core Algorithm}
-
-The project was implemented using a strict object-oriented programming (OOP) approach. Each phase of the audio analysis and processing is encapsulated within a specific class.\\
-This approach ensures a strict separation of concerns. The respective data state, such as the current audio array, STFT calculations, or detected peaks, is stored as an attribute of the corresponding object. This avoids global variables and significantly simplifies parameter passing between the different processing steps.\\
-The following section details the modular structure of the Python files and the role of each class:
-
-\begin{figure}[htpb]
-    \centering
-    \includegraphics[width=1.1\textwidth]{class_diagram.png}
-    \caption{Class diagram of the Audio-to-MIDI object-oriented architecture.}
-    \label{fig:class_diagram}
-\end{figure}
-
-\begin{description}
-    \item[\texttt{main.py}:] This file serves as the central entry point of the application. Here, the main controller class \texttt{AudioToMidi} is instantiated, initialized with the file paths for the different drum components (kick, snare, hi-hat), and the automated processing pipeline is started.
-    
-    \item[\texttt{AudioToMidi.py}:] This file contains the \texttt{AudioToMidi} class, which acts as the central orchestrator of the workflow. It creates instances of the other processing classes and controls the sequential execution for each instrument.
-    
-    \item[\texttt{LoadAudioFile.py}:] The \texttt{LoadAudioFile} class encapsulates the reading of audio data using the \texttt{librosa}\cite{librosa} library. The resulting audio array and the sampling rate are stored directly within the object as its state. Additionally, the class contains custom methods for preprocessing steps, such as an implemented noise gate.
-    
-    \item[\texttt{LoadSTFT.py}:] This class is responsible for calculating the Short-Time Fourier Transform (STFT). The class stores the calculated spectrogram as an attribute and provides methods for direct visualization.
-    
-    \item[\texttt{SpectralFluxCalculator.py}:] Here, the spectral flux is calculated from the STFT data. The \texttt{SpectralFluxCalculator} class holds the STFT data as an attribute and provides methods for calculating the logarithmic magnitude as well as positive signal changes to detect high-energy transients (onsets) in the frequency spectrum.
-    
-    \item[\texttt{PeakPicking.py}:] The logic for the actual beat detection is isolated within the \texttt{PeakPicking} class. It internally calculates an adaptive threshold using convolution (moving average) over the spectral flux and accounts for debouncing parameters. The finally detected onset frames are stored as an object attribute.
-    
-    \item[\texttt{Filtering.py}:] The \texttt{Filtering} class manages various elliptical bandpass filters for the specific frequency ranges of the kick, snare, and hi-hat. It utilizes \texttt{scipy.signal}\cite{scipy} and keeps the filter states ready as instance variables for subsequent filtering processes.
-    
-    \item[\texttt{MidiExport.py}:] The final step of the pipeline is encapsulated in the \texttt{MidiExport} class, which handles the conversion of the detected frames into a MIDI file using the \texttt{mido}\cite{mido} library. It takes care of converting frames to seconds and then to MIDI ticks, generates individual tracks for each instrument, and bundles them on the standard MIDI drum channel.
-\end{description}
-
-\newpage
-\section{Audio Import}
-The first step in the pipeline is loading and preprocessing the audio files.
-\begin{figure}[htpb]
-    \centering
-    \includegraphics[width=1\textwidth]{IsolatedAudio.png}
-    \caption{Waveforms of the different isolations states.}
-    \label{fig:import_waveforms}
-\end{figure}
-
-\subsection{Loading Audio Data}
-The Python library \texttt{librosa} is used for the actual loading of the audio data. The \texttt{load\_audio}\cite{librosa} method reads the specified file, converts it to a mono signal by default, and uses a target sample rate of 44100 Hz. 
-
-\subsection{Noise Gate}
-After the signal has been successfully loaded, noise reduction is applied to remove background noise in quiet passages. This is realized by the \texttt{noise\_gate} method, which cuts off all values below a certain threshold and sets them to 0. The noise gate threshold is calculated dynamically using percentiles.
-\begin{enumerate}
-    \item To obtain an envelope of the signal, the absolute values of the array are first computed: $\text{env} = |\text{self.audio\_array}|$.
-    \item The threshold is then defined as the 90th percentile of this envelope using the \texttt{np.percentile(env, 90)} function\cite{numpy}. This means the threshold is set so that 90\% of the signal's amplitude values fall below it, effectively isolating the loudest 10\% of the audio (the actual drum hits).
-    \item Finally, using the \texttt{np.where} function\cite{numpy}, all signal components whose absolute magnitude is smaller than this calculated threshold are filtered out and overwritten with zero. 
-\end{enumerate}
-
-\section{FFT Analyse}
-    \subsection{FFT Algorithm}
-        The Fast Fourier Transform (FFT) algorithm is used for computing the Discrete Fourier Transform (DFT) of a sequence. 
-        The DFT of a sequence $x(n)$ of length $N$ is defined as:
-
-        \begin{equation}
-            X(k) = \sum_{n=0}^{N-1} x(n) e^{-j2\pi kn/N}
-        \end{equation}
-        For every frequency bin $k$, the DFT computes a complex number $X(k)$ that represents the amplitude and phase of the corresponding frequency component in the input signal.
-        To calculate $N$ coefficients, $O(N^2)$ operations are required. This is because for each of the N output values, a sum of N terms must be computed. 
-
-        The FFT algorithm separates the DFT into smaller DFTs, by recursively dividing the input sequence into even and odd indexed elements.
-
-        \begin{equation}
-            X(k) = \sum_{n=0}^{N/2-1} x(2n) e^{-j2\pi k(2n)/N} + \sum_{n=0}^{N/2-1} x(2n+1) e^{-j2\pi k(2n+1)/N}
-        \end{equation}
-
-        For better understanding, the even and odd indexed elements can be represented as, by using the substitution:
-
-        \begin{equation}
-            X_{even}(k) = \sum_{n=0}^{N/2-1} x(2n) e^{-j2\pi kn/(N/2)}
-            ,
-            X_{odd}(k) = \sum_{n=0}^{N/2-1} x(2n+1) e^{-j2\pi kn/(N/2)}
-        \end{equation}
-    
-        \begin{equation}
-            X(k) = X_{even}(k) + e^{-j2\pi k/N} X_{odd}(k)
-        \end{equation}
-
-        Because of the periodicity of the complex exponential function, two different values of $k$ can be calculated by:
-
-        \begin{equation}
-            X(k + N/2) = X_{even}(k) - e^{-j2\pi k/N} X_{odd}(k)
-            ,
-            X(k) = X_{even}(k) + e^{-j2\pi k/N} X_{odd}(k)
-        \end{equation}
-
-        By  recursively splitting the DFT into two smaller DFTs, the number of operations is reduced to $O(N \log N)$, which makes the FFT algorithm much more efficient for large input sizes.
-
-     \subsection{Windowing}
-        To generate the spectrogram, the input signal is divided into overlapping frames, and a window function is applied to each frame to minimize spectral leakage.
-        Common window functions include Hanning, Hamming, and Blackman windows.
-        
-        \noindent The result is a 2D array where each column represents the magnitude spectrum of a frame, and each row corresponds to a specific frequency bin.
-
-        \noindent Example of a 2D array representing frames and frequency bins:
-        \[
-        \mathbf{L} =
-        \begin{bmatrix}
-                1 & 4 & 1 & 6 \\
-                3 & 2 & 2 & 1 \\
-                1 & 5 & 3 & 6
-        \end{bmatrix}
-        \]
-        \noindent This array can be visualized as a spectrogram, showing how the frequency content of the signal evolves over time.
-    
-
-\section{FLUX Detection}
-
-    \subsection{Calculation of Logarithmic Magnitude Spectrum}
-
-        The logarithmic magnitude spectrum is calculated using the formula:
-        \begin{equation}
-            L(k) = \log_{10}(|X(k)|)
-        \end{equation}
-        It transforms the linear magnitude spectrum into a logarithmic scale,
-        which is more aligned with human auditory perception.
-
-     \subsection{Calculation of Spectral Flux}
-        The spectral flux is calculated as the difference between the logarithmic magnitude spectra of consecutive frames:
-        \begin{equation}
-            F(n) = \sum_{k=0}^{N-1} L_n(k) - L_{n-1}(k)
-        \end{equation}
-        For each frame $n$, the spectral flux $F(n)$ is computed by summing the squared differences of the logarithmic magnitude spectra $L_n(k)$ and $L_{n-1}(k)$ across all frequency bins $k$.
-        The frames are typically stored in a 2D array where each column represents a frame and each row represents a frequency bin. The difference between consecutive frames can be represented as:
-        \begin{equation}
-            \Delta L(k) = L_n(k) - L_{n-1}(k)
-        \end{equation}
-        Example of a 2D array representing frames and frequency bins:
-        \[
-        \mathbf{L} =
-        \begin{bmatrix}
-                1 & 4 & 1 & 6 \\
-                3 & 2 & 2 & 1 \\
-                1 & 5 & 3 & 6
-        \end{bmatrix}
-        \]
-        The resulting difference between consecutive frames is:
-        \[
-        \Delta \mathbf{L} =
-        \begin{bmatrix}
-                4 & 1 & 6 \\
-                2 & 2 & 1 \\
-                5 & 3 & 6
-        \end{bmatrix} 
-        -
-        \begin{bmatrix}
-                1 & 4 & 1 \\
-                3 & 2 & 2 \\
-                1 & 5 & 3
-        \end{bmatrix} 
-        =
-        \begin{bmatrix}
-                3 & -3 & 5 \\
-                -1 & 0 & -1 \\
-                4 & -2 & 3
-        \end{bmatrix}
-            \]
-        Then, the spectral flux is computed by summing these differences across all frequency bins for each frame:
-        \begin{equation}
-            F(n) = \sum_{k} |\Delta L(k)|
-        \end{equation}
-        \[
-        \mathbf{F} =
-        \begin{bmatrix}
-            |3| + |(-1)| + |4| &
-            |(-3)| + |0| + |(-2)| &
-            |5| + |(-1)| + |3|
-        \end{bmatrix}^T
-        =
-        \begin{bmatrix}
-            8 & 5 & 9
-            \end{bmatrix}^T
-            \]
-
-        \begin{figure}[htpb]
-            \centering
-            \includegraphics[width=0.8\textwidth]{spectral_flux.png}
-            \caption{Visualization of the spectral flux calculation.}
-            \label{fig:spectral_flux}
-        \end{figure}
-        The Code to calculate the spectral flux from the differences is as follows:
-        \small
-\begin{lstlisting}
-flux = np.sum((calculated_FLUX[:, 1:] - calculated_FLUX[:, :-1]))   
-\end{lstlisting}
-         \normalsize
-
-    \subsection{Half-Wave Rectification}
-        Half-wave rectification is applied to the spectral flux to retain only positive values, which correspond to increases in spectral energy. This is done by setting all negative values to zero:
-        \begin{equation}
-            F_{rect}(n) = \max(0, F(n))
-        \end{equation}
-        This step ensures that only significant increases in spectral energy are considered for further analysis.
-        \\
-        \\
-        For example, given the spectral flux values:
-        \[ \Delta L = \begin{bmatrix}
-                -2 & 2 & -4 \\
-                3  & 1 & 5\\
-                -1 & 4 & -6
-            \end{bmatrix}
-            = 
-            \begin{bmatrix}
-                0 & 2 & 0 \\
-                3 & 1 & 5\\
-                0 & 4 & 0
-            \end{bmatrix}
-        \]
-        And Summed up:
-        \[ F =\begin{bmatrix}
-                0+3+0 & 2+1+4 & 0+5+0
-            \end{bmatrix}^T
-            =
-            \begin{bmatrix}
-                3 & 7 & 5
-            \end{bmatrix}^T
-        \]
-        \begin{figure}[htpb]
-            \centering
-            \includegraphics[width=0.8\textwidth]{positive_spectral_flux.png}
-            \caption{Visualization of the positive spectral flux (half-wave rectification).}
-            \label{fig:positive_spectral_flux}
-        \end{figure}
-\newpage
-\section{Onset Detection}
-    Onset detection is an essential processing step within the pipeline. The goal of this procedure is to identify the exact timings (onsets) of musical events. In the case of drum detection, drum hits are identified, from a novelty function, which is the calculated positive spectral flux.\\
-    Consequently, a peak is only registered if three criteria are met simultaneously:
+%------------------------------------------------
+\begin{frame}{Agenda}
     \begin{enumerate}
-        \item \textbf{Amplitude:} The signal must be loud enough and exceed the local adaptive threshold.
-        \item \textbf{Local Maximum:} The considered point must have a larger value than its direct temporal neighbors (the frame before and after).
-        \item \textbf{De-bouncing (Minimum Distance):} A single musical event can cause fluctuations over several frames. To avoid multiple detections of the same beat, a defined waiting time (\texttt{wait}) must be maintained between two detected peaks.
+        \item Introduction and motivation
+        \item Software architecture
+        \item Audio preprocessing
+        \item STFT and time-frequency analysis
+        \item Spectral flux and onset detection
+        \item Peak picking
+        \item MIDI export
+        \item Conclusion and outlook
     \end{enumerate}
-\newpage
-    \subsection{Adaptive Threshold and offset}
-        An adaptive threshold follows the rough envelope of the signal. Typically, a moving average is calculated over a time window of a defined size for this purpose. The moving average serves to smooth the spectral flux and forms the basis of the adaptive threshold. Mathematically, the filter can be described as a discrete convolution of the input signal with a filter kernel.\\
-        Let $x[n]$ be the discrete-time input signal (the spectral flux at frame $n$) and $N$ the window size (\texttt{window\_size}). The output of the filter $y[n]$ is the unweighted mean of the $N$ adjacent samples.\\
-        The centered calculation (corresponding to the \texttt{mode='same'} parameter in the code) can be expressed by the following sum formula:
-\begin{equation}
-    y[n] = \frac{1}{N} \sum_{k = -\lfloor \frac{N}{2} \rfloor}^{\lfloor \frac{N-1}{2} \rfloor} x[n+k]
-\end{equation}\\
-In signal processing, this operation is typically formulated as a discrete convolution. The signal $x[n]$ is convolved with the impulse response (the kernel) $h[n]$:
-\begin{equation}
-    y[n] = (x * h)[n] = \sum_{k=-\infty}^{\infty} x[k] \cdot h[n-k]
-\end{equation}\\
-The filter kernel $h[n]$ is a rectangular window of length $N$, where all values are equally weighted. This corresponds to the code line \texttt{kernel = np.ones(window\_size) / window\_size}:
-\begin{equation}
-    h[n] = 
-    \begin{cases} 
-        \frac{1}{N} & \text{for } 0 \leq n < N \\ 
-        0 & \text{otherwise} 
-    \end{cases}
-\end{equation}\\
-Through this convolution operation, short-term noise is suppressed and the fundamental dynamic envelope (the trend) of the signal is extracted, onto which the offset for the final threshold is subsequently added.
-To prevent background noise (noise floor) from being falsely detected as a peak, an offset (delta) is added to this average. This offset can be static or dynamically adapt to signal blocks.\newline In the present implementation, the moving average is realized by a mathematical convolution (\texttt{np.convolve})\cite{numpy} of the flux with a uniformly distributed kernel. The offset is calculated and added block-wise:
+\end{frame}
 
-\begin{lstlisting}
-def calculate_adaptive_threshold(self, window_size):
-    # Filter kernel for moving average
-    kernel = np.ones(window_size) / window_size
-    moving_avg = np.convolve(self.flux, kernel, mode='same')
-    
-    # Calculate and add offset (delta)
-    deltas = self.calculate_delta(window_size, 3)
-    for i in range(len(moving_avg)):
-        delta_index = int(i / window_size)
-        if delta_index < len(deltas):
-            moving_avg[i] += deltas[delta_index]
+%------------------------------------------------
+\section{Introduction}
 
-    self.threshold_curve = moving_avg
-    return self.threshold_curve
-
-def calculate_delta(self, window_size, multiplier):
-    # Block-wise calculation of the noise offset
-    len_flux = len(self.flux)
-    delta_values = np.zeros(int(np.ceil(len_flux/window_size)))
-    for i in range(len(delta_values)):
-        start = i * window_size
-        end = min((i + 1) * window_size, len_flux)
-        delta_values[i] = np.mean(self.flux[start:end]) * multiplier
-    return delta_values
-\end{lstlisting}
-\newpage
-                \subsection{Identification of Peaks (Peak Picking)}
-                Once the threshold curve is available, the algorithm iterates through the signal. At each point, it checks whether the current value exceeds the threshold, whether it is the tip of a local hill, and whether the time distance to the last detected peak is large enough (de-bouncing).\\
-                This can be implemented very directly as a loop with conditional checks.
-
-\begin{lstlisting}
-def find_peaks(self, window_size, wait):
-    thresholds = self.calculate_adaptive_threshold(window_size)
-    found_peaks = []
-    last_peak_index = -wait  # Initialization for debouncing
-    n_frames = len(self.flux)
-
-    for i in range(1, n_frames - 1):
-        current_val = self.flux[i]
-        current_thresh = thresholds[i]
-        
-        # Condition 1: Above the threshold?
-        if current_val > current_thresh:
-            # Condition 2: Local maximum?
-            if current_val > self.flux[i-1] and current_val > self.flux[i+1]:
-                # Condition 3: Debouncing time expired?
-                if (i - last_peak_index) > wait:
-                    found_peaks.append(i)
-                    last_peak_index = i
-    
-    self.onsets = np.array(found_peaks)
-    return self.onsets
-\end{lstlisting}
-
-\begin{figure}[htpb]
-        \centering
-        \includegraphics[width=1\textwidth]{peak_picking.png}
-        \caption{Visualization of the peak picking algorithm.}
-        \label{fig:peak_picking}
-    \end{figure}
-    \newpage
-    \subsection{Practical Application}
-    The parameters for window size (\texttt{window\_size}) and waiting time (\texttt{wait}) depend heavily on the characteristics of the signal to be analyzed. For percussive, low-frequency instruments like a kick drum, different parameters are often chosen compared to high-frequency, fast instruments like a hi-hat.
-\newpage
-
-\section{MIDI Export}
-The final step in the pipeline is the translation of the detected onset times into a standard musical format (MIDI).
-
-\subsection{Library and Input Parameters}
-To construct and write the MIDI files, the Python library \texttt{mido} \cite{mido}is used. Generating an accurate MIDI sequence requires translating the algorithmic time units (FFT frames) back into absolute real-time units (seconds) and eventually into MIDI ticks.\\
-Therefore, the export function requires the following parameters from the preceding signal processing stages:
-\begin{itemize}
-    \item \textbf{Onset Frames:} The arrays containing the identified frame indices for each instrument (\texttt{kick\_frames}, \texttt{snare\_frames}, \texttt{hihat\_frames}).
-    \item \textbf{Sample Rate and Hop Length:} The \texttt{sample\_rate} of the original audio and the \texttt{hop\_length} used during the FFT. These are mathematically essential to convert the frame indices into precise time stamps in seconds.
-    \item \textbf{BPM (Beats Per Minute):} A defined tempo used to calculate the correct MIDI ticks per beat.
-\end{itemize}
-
-\subsection{Output Configuration}
-The generated output is a multi-track MIDI file. To ensure compatibility with standard digital audio workstations (DAWs) and synthesizers, the export maps the data according to the General MIDI (GM) standard:
-\begin{itemize}
-    \item \textbf{Routing:} All generated events are routed to MIDI Channel 10 (indexed internally as channel 9), which is the standard channel reserved for percussion and drums.
-    \item \textbf{Track Separation and Note Mapping:} The exporter creates three separate tracks within the file. Each track represents one specific drum element and triggers a designated MIDI note number:
+\begin{frame}{Project Goal and Motivation}
     \begin{itemize}
-        \item \textbf{Kick Drum:} Note 36
-        \item \textbf{Snare Drum:} Note 38
-        \item \textbf{Closed Hi-Hat:} Note 42
+        \item Goal: extract \textbf{kick}, \textbf{snare}, and \textbf{hi-hat} onsets from an audio track.
+        \item Convert detected drum events into a \textbf{MIDI file}.
+        \item This allows:
+        \begin{itemize}
+            \item recreating grooves from songs,
+            \item editing rhythms in a DAW,
+            \item generating rhythmic transcriptions.
+        \end{itemize}
+        \item Main challenge: accurate separation and onset detection in real audio.
     \end{itemize}
-\end{itemize}
-This structured output allows the user to simply import the final \texttt{.mid} file into any audio software and play it back using virtual drum samplers.
+\end{frame}
 
-\section{Conclusion and Outlook}
+%------------------------------------------------
+\begin{frame}{Software and Libraries}
+    \begin{itemize}
+        \item \textbf{Python} implementation in \textbf{VS Code}
+        \item Main libraries:
+        \begin{itemize}
+            \item \textbf{Librosa}: loading audio and STFT
+            \item \textbf{NumPy}: numerical operations
+            \item \textbf{Matplotlib}: visualization
+            \item \textbf{Mido}: MIDI export
+            \item \textbf{PyTorch / TorchAudio}: drum stem separation
+        \end{itemize}
+        \item Additional tool:
+        \begin{itemize}
+            \item \textbf{Rebeat}: separation into kick, snare and hi-hat
+        \end{itemize}
+    \end{itemize}
+\end{frame}
 
-\noindent
-In this project, a signal processing pipeline was developed to convert drum audio signals into MIDI events. The implemented system combines classical digital signal processing methods such as STFT analysis, spectral flux calculation, and adaptive peak picking in order to detect drum onsets and transfer them into MIDI format.
+%------------------------------------------------
+\section{Architecture}
 
-\noindent
-At the beginning, an attempt was made to separate the individual drum instruments using classical filter techniques based on their typical frequency ranges. However, this approach did not produce reliable results, since the frequency ranges of kick, snare, and hi-hat overlap strongly in real audio recordings. For this reason, an AI-based source separation method was chosen in order to first isolate the drum stem from the complete audio signal.
+\begin{frame}{Overall Signal Processing Pipeline}
+\centering
+\begin{tikzpicture}[
+    scale=0.72,
+    transform shape,
+    node distance=0.5cm and 1.2cm,
+    process/.style={rectangle, draw=black, thick, rounded corners, text width=3.6cm, align=center, minimum height=0.8cm, fill=blue!5},
+    algorithm/.style={rectangle, draw=black, thick, rounded corners, text width=3.6cm, align=center, minimum height=0.8cm, fill=orange!10},
+    io/.style={trapezium, trapezium left angle=75, trapezium right angle=105, draw=black, thick, text width=2.8cm, align=center, minimum height=0.8cm, fill=green!10},
+    arrow/.style={-{Stealth[scale=1.0]}, thick}
+]
 
-\noindent
-Nevertheless, this separation was still not perfect. Even after the AI-based processing, the resulting signals still contained noise and overlapping components, which negatively affected the onset detection. Therefore, a noise gate was introduced as an additional preprocessing step to suppress low-amplitude background components and make the actual drum hits more prominent.
+\node[io] (input) {Original\\Audio Mix};
+\node[process, below=of input] (demucs) {Deep Learning Separation\\(HDEMUCS)};
+\node[io, below=of demucs] (drumstem) {Drum Stem};
+\node[process, below=of drumstem] (rebeat) {Rebeat\\Separation};
+\node[io, below=of rebeat] (elements) {Kick / Snare / Hi-Hat};
 
-\noindent
-Overall, the developed system is capable of generating usable MIDI drum patterns from audio material. At the same time, the results show that perfect separation and detection remain challenging. Future improvements could be achieved through more advanced separation models or more robust detection methods.
-\section{References}
+\node[algorithm, right=4cm of input] (import) {1. Audio Import\\\& Noise Gate};
+\node[algorithm, below=of import] (stft) {2. STFT};
+\node[algorithm, below=of stft] (flux) {3. Spectral Flux};
+\node[algorithm, below=of flux] (peaks) {4. Peak Picking};
+\node[process, below=of peaks] (midi) {5. MIDI Export};
+\node[io, below=of midi] (output) {Final MIDI File};
+
+\draw[arrow] (input) -- (demucs);
+\draw[arrow] (demucs) -- (drumstem);
+\draw[arrow] (drumstem) -- (rebeat);
+\draw[arrow] (rebeat) -- (elements);
+
+\draw[arrow, blue] (elements.east) -- ++(2,0) |- (import.west);
+
+\draw[arrow] (import) -- (stft);
+\draw[arrow] (stft) -- (flux);
+\draw[arrow] (flux) -- (peaks);
+\draw[arrow] (peaks) -- (midi);
+\draw[arrow] (midi) -- (output);
+
+\end{tikzpicture}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Object-Oriented Design}
+    \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
+            \begin{itemize}
+                \item Strict \textbf{object-oriented design}
+                \item Each processing step is implemented in a dedicated class
+                \item Advantages:
+                \begin{itemize}
+                    \item modular structure
+                    \item easier debugging
+                    \item no global variables
+                    \item better maintainability
+                \end{itemize}
+                \item Main classes:
+                \begin{itemize}
+                    \item \texttt{LoadAudioFile}
+                    \item \texttt{LoadSTFT}
+                    \item \texttt{SpectralFluxCalculator}
+                    \item \texttt{PeakPicking}
+                    \item \texttt{MidiExport}
+                \end{itemize}
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+        \end{column}
+    \end{columns}
+    
+\end{frame}
+
+%------------------------------------------------
+\section{Audio Preprocessing}
+
+\begin{frame}{Audio Separation}
+    \begin{columns}[T]
+        \begin{column}{0.2\textwidth}
+\centering
+\begin{tikzpicture}[
+    scale=0.72,
+    transform shape,
+    node distance=0.5cm and 1.2cm,
+    process/.style={rectangle, draw=black, thick, rounded corners, text width=3.6cm, align=center, minimum height=0.8cm, fill=blue!5},
+    algorithm/.style={rectangle, draw=black, thick, rounded corners, text width=3.6cm, align=center, minimum height=0.8cm, fill=orange!10},
+    io/.style={trapezium, trapezium left angle=75, trapezium right angle=105, draw=black, thick, text width=2.8cm, align=center, minimum height=0.8cm, fill=green!10},
+    arrow/.style={-{Stealth[scale=1.0]}, thick}
+]
+
+\node[io] (input) {Original\\Audio Mix};
+\node[process, below=of input] (demucs) {Deep Learning Separation\\(HDEMUCS)};
+\node[io, below=of demucs] (drumstem) {Drum Stem};
+\node[process, below=of drumstem] (rebeat) {Rebeat\\Separation};
+\node[io, below=of rebeat] (elements) {Kick / Snare / Hi-Hat};
+
+
+\draw[arrow] (input) -- (demucs);
+\draw[arrow] (demucs) -- (drumstem);
+\draw[arrow] (drumstem) -- (rebeat);
+\draw[arrow] (rebeat) -- (elements);
+
+
+\end{tikzpicture}
+\end{column}
+
+\begin{column}{0.7\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{IsolatedAudio2.png}
+
+        \end{column}
+    \end{columns}
+\end{frame}
+
+
+\begin{frame}{Audio Import and Noise Gate}
+
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \begin{itemize}
+                \item Kick / Snare / HiHat Audio is loaded with \textbf{librosa}
+                \item Mono conversion and resampling to \textbf{44.1 kHz}
+                \item A \textbf{noise gate} suppresses low-amplitude noise
+                \item Threshold based on the \textbf{90th percentile} of the envelope
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \[
+            \text{env} = |\text{audio}|
+            \qquad
+            T = \text{percentile}(\text{env}, 90)
+            \]
+
+            \[
+            x_{\text{gated}}[n] =
+            \begin{cases}
+                x[n], & |x[n]| \ge T \\
+                0, & |x[n]| < T
+            \end{cases}
+            \]
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\section{STFT and Time-Frequency Analysis}
+
+\begin{frame}{Audio Import to STFT}
+\centering
+\begin{tikzpicture}[
+    scale=1,
+    transform shape,
+    node distance=2cm and 9cm,
+    process/.style={rectangle, draw=black, thick, rounded corners, text width=3.6cm, align=center, minimum height=0.8cm, fill=blue!5},
+    algorithm/.style={rectangle, draw=black, thick, rounded corners, text width=3.6cm, align=center, minimum height=0.8cm, fill=orange!10},
+    io/.style={trapezium, trapezium left angle=75, trapezium right angle=105, draw=black, thick, text width=2.8cm, align=center, minimum height=0.8cm, fill=green!10},
+    arrow/.style={-{Stealth[scale=1.0]}, thick}
+]
+
+\node[algorithm, right=4cm of input] (import) {1. Audio Import\\\& Noise Gate};
+\node[algorithm, below=of import] (stft) {2. STFT};
+\draw[arrow] (import) -- node[midway, right, font=\small\itshape] {gated audio time signal} (stft);
+
+\end{tikzpicture}
+\end{frame}
+%------------------------------------------------
+\section{STFT and Time-Frequency Analysis}
+
+\begin{frame}{FFT and STFT}
+    \begin{itemize}
+        \item The \textbf{FFT} efficiently computes the Discrete Fourier Transform.
+        \item Computational complexity is reduced from
+        \[
+        O(N^2) \rightarrow O(N \log N)
+        \]
+        \item For non-stationary audio, the signal is divided into overlapping frames.
+        \item A window function is applied to each frame.
+        \item This produces the \textbf{Short-Time Fourier Transform (STFT)}.
+    \end{itemize}
+
+    \[
+    X(k)=\sum_{n=0}^{N-1}x(n)e^{-j2\pi kn/N}\qquad
+    \mathbf{|X_e|} =
+    \begin{bmatrix}
+        1 & 4 & 1 & 6 \\
+        3 & 2 & 2 & 1 \\
+        1 & 5 & 3 & 6
+    \end{bmatrix}
+    \]
+
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{STFT: Principle and Spectrogram}
+    \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
+    \begin{itemize}
+        \item The signal is split into short overlapping time frames.
+        \item Each frame is multiplied by a window function.
+        \item Then an FFT is calculated for every frame.
+    \end{itemize}
+    \end{column}    
+    \begin{column}{0.48\textwidth}
+    \begin{itemize}
+        \item The result is a time-frequency representation: the \textbf{spectrogram}.
+        \item Columns represent time frames.
+        \item Rows represent frequency bins.
+        \item This makes transient drum events visible over time.
+    \end{itemize}
+        \end{column}
+    \end{columns}
+    \centering
+    \includegraphics[width=0.45\textwidth]{Spektrogram_House.png}
+\end{frame}
+
+%------------------------------------------------
+\section{Spectral Flux and Onset Detection}
+\begin{frame}{STFT to Spectral Flux}
+\centering
+\begin{tikzpicture}[
+    scale=1,
+    transform shape,
+    node distance=2cm and 9cm,
+    process/.style={rectangle, draw=black, thick, rounded corners, text width=3.6cm, align=center, minimum height=0.8cm, fill=blue!5},
+    algorithm/.style={rectangle, draw=black, thick, rounded corners, text width=3.6cm, align=center, minimum height=0.8cm, fill=orange!10},
+    io/.style={trapezium, trapezium left angle=75, trapezium right angle=105, draw=black, thick, text width=2.8cm, align=center, minimum height=0.8cm, fill=green!10},
+    arrow/.style={-{Stealth[scale=1.0]}, thick}
+]
+
+\node[algorithm, below=of import] (stft) {2. STFT};
+\node[algorithm, below=of stft] (flux) {3. Spectral Flux};
+
+\draw[arrow] (stft) -- node[midway, right, font=\small\itshape] {spectrogram} (flux);
+
+\end{tikzpicture}
+\end{frame}
+\begin{frame}{Spectral Flux}
+    \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
+            \begin{itemize}
+                \item Drum hits create sudden increases in spectral energy.
+                \item These increases are measured by the \textbf{spectral flux}.
+                \item First, the logarithmic magnitude is calculated:
+            \end{itemize}
+
+            \[
+            L(k)=\log_{10}(|X(k)|)
+            \]
+
+            \[
+            \Delta L(k)=L_n(k)-L_{n-1}(k)
+            \]
+
+            \[
+            F(n)=\sum_k |\Delta L(k)|
+            \]
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{spectral_flux.png}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Spectral Flux Example with Matrices}
+    \small
+    Given the logarithmic magnitude spectrum:
+    \[
+    \mathbf{L} =
+    \begin{bmatrix}
+        1 & 4 & 1 & 6 \\
+        3 & 2 & 2 & 1 \\
+        1 & 5 & 3 & 6
+    \end{bmatrix}
+    \]
+
+    The difference between consecutive frames is:
+    \[
+    \Delta \mathbf{L} =
+    \begin{bmatrix}
+        4 & 1 & 6 \\
+        2 & 2 & 1 \\
+        5 & 3 & 6
+    \end{bmatrix}
+    -
+    \begin{bmatrix}
+        1 & 4 & 1 \\
+        3 & 2 & 2 \\
+        1 & 5 & 3
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        3 & -3 & 5 \\
+        -1 & 0 & -1 \\
+        4 & -2 & 3
+    \end{bmatrix}
+    \]
+
+    Summing the absolute values column-wise gives:
+    \[
+    \mathbf{F} =
+    \begin{bmatrix}
+        |3|+|{-1}|+|4| \\
+        |{-3}|+|0|+|{-2}| \\
+        |5|+|{-1}|+|3|
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        8 \\
+        5 \\
+        9
+    \end{bmatrix}
+    \]
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Half-Wave Rectification}
+    \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
+            \begin{itemize}
+                \item Only \textbf{positive} energy changes are relevant.
+                \item Negative values are discarded.
+            \end{itemize}
+
+            \[
+            F_{\text{rect}}(n)=\max(0, F(n))
+            \]
+
+            \begin{itemize}
+                \item This emphasizes attack transients.
+                \item It improves onset detection for percussive sounds.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{positive_spectral_flux.png}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+%------------------------------------------------
+\section{Peak Picking}
+
+\begin{frame}{Spectral Flux to Peak Picking}
+\centering
+\begin{tikzpicture}[
+    scale=1,
+    transform shape,
+    node distance=2cm and 9cm,
+    process/.style={rectangle, draw=black, thick, rounded corners, text width=3.6cm, align=center, minimum height=0.8cm, fill=blue!5},
+    algorithm/.style={rectangle, draw=black, thick, rounded corners, text width=3.6cm, align=center, minimum height=0.8cm, fill=orange!10},
+    io/.style={trapezium, trapezium left angle=75, trapezium right angle=105, draw=black, thick, text width=2.8cm, align=center, minimum height=0.8cm, fill=green!10},
+    arrow/.style={-{Stealth[scale=1.0]}, thick}
+]
+
+\node[algorithm, below=of stft] (flux) {3. Spectral Flux};
+\node[algorithm, below=of flux] (peaks) {4. Peak Picking};
+
+\draw[arrow] (flux) -- node[midway, right, font=\small\itshape] {positive spectral flux} (peaks);
+\end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Adaptive Threshold and Peak Picking}
+    \begin{itemize}
+        \item A fixed threshold is not robust enough for varying audio levels.
+        \item Therefore, an \textbf{adaptive threshold} is used.
+        \item It is based on a moving average:
+    \end{itemize}
+
+    \[
+    y[n] = \frac{1}{N}\sum_{k=-\lfloor N/2 \rfloor}^{\lfloor (N-1)/2 \rfloor} x[n+k]
+    \]
+
+    \begin{itemize}
+        \item An additional offset avoids detections from the noise floor.
+        \item A valid onset must satisfy:
+        \begin{enumerate}
+            \item above threshold,
+            \item local maximum,
+            \item enough distance to the previous onset.
+        \end{enumerate}
+    \end{itemize}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Peak Picking Visualization}
+    \centering
+    \includegraphics[width=0.65\textwidth]{peak_picking.png}
+
+    \vspace{0.3cm}
+    \begin{itemize}
+        \item Peaks are selected only if they exceed the adaptive threshold.
+        \item Debouncing prevents multiple detections of the same hit.
+    \end{itemize}
+\end{frame}
+
+%------------------------------------------------
+
+%------------------------------------------------
+\section{MIDI Export}
+\begin{frame}{Peak Picking to MIDI Export}
+\centering
+\begin{tikzpicture}[
+    scale=1,
+    transform shape,
+    node distance=2cm and 9cm,
+    process/.style={rectangle, draw=black, thick, rounded corners, text width=3.6cm, align=center, minimum height=0.8cm, fill=blue!5},
+    algorithm/.style={rectangle, draw=black, thick, rounded corners, text width=3.6cm, align=center, minimum height=0.8cm, fill=orange!10},
+    io/.style={trapezium, trapezium left angle=75, trapezium right angle=105, draw=black, thick, text width=2.8cm, align=center, minimum height=0.8cm, fill=green!10},
+    arrow/.style={-{Stealth[scale=1.0]}, thick}
+]
+
+\node[algorithm, below=of flux] (peaks) {4. Peak Picking};
+\node[process, below=of peaks] (midi) {5. MIDI Export};
+
+\draw[arrow] (peaks) -- node[midway, right, font=\small\itshape] {onset frames, sample rate, hop length, BPM} (midi);
+\end{tikzpicture}
+\end{frame}
+\begin{frame}{MIDI Export}
+    \begin{itemize}
+        \item Detected onset frames are converted into MIDI events.
+        \item Required parameters:
+        \begin{itemize}
+            \item onset frames,
+            \item sample rate,
+            \item hop length,
+            \item BPM.
+        \end{itemize}
+        \item Output:
+        \begin{itemize}
+            \item \textbf{multi-track MIDI file}
+            \item routed to \textbf{MIDI channel 10}
+        \end{itemize}
+        \item General MIDI mapping:
+        \begin{itemize}
+            \item Kick: 36
+            \item Snare: 38
+            \item Closed Hi-Hat: 42
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+%------------------------------------------------
+\section{Conclusion}
+
+\begin{frame}{Conclusion and Outlook}
+    \begin{itemize}
+        \item The system can generate usable MIDI drum patterns from audio.
+        \item It combines:
+        \begin{itemize}
+            \item AI-based source separation
+            \item classical DSP methods
+            \item rule-based onset detection
+        \end{itemize}
+        \item Main limitations:
+        \begin{itemize}
+            \item imperfect source separation
+            \item overlap between drum components
+            \item noise in extracted stems
+        \end{itemize}
+        \item Future work:
+        \begin{itemize}
+            \item improved separation models
+            \item more robust onset detection
+            \item automatic tempo estimation
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{References}
+\footnotesize
 \begin{thebibliography}{99}
 
 \bibitem{librosa}
-Librosa Developers, \emph{Librosa documentation}, [Online]. Available: \url{https://librosa.org/doc/main/index.html}.
+Librosa Developers, \emph{Librosa documentation}. \url{https://librosa.org/doc/main/index.html}
 
 \bibitem{matplotlib}
-Matplotlib Developers, \emph{Matplotlib Documentation}, [Online]. Available: \url{https://matplotlib.org/}.
+Matplotlib Developers, \emph{Matplotlib Documentation}. \url{https://matplotlib.org/}
 
 \bibitem{numpy}
-NumPy Developers, \emph{NumPy Documentation}, [Online]. Available: \url{https://numpy.org/devdocs/index.html}.
+NumPy Developers, \emph{NumPy Documentation}. \url{https://numpy.org/devdocs/index.html}
 
 \bibitem{pytorch}
-PyTorch Developers, \emph{PyTorch Documentation}, [Online]. Available: \url{https://pytorch.org/}.
+PyTorch Developers, \emph{PyTorch Documentation}. \url{https://pytorch.org/}
 
 \bibitem{rebeat}
-Rebeat Developers, \emph{Rebeat App and documentation}, [Online]. Available: \url{https://rebeatapp.com/}.
+Rebeat Developers, \emph{Rebeat App and documentation}. \url{https://rebeatapp.com/}
 
 \bibitem{scipy}
-SciPy Developers, \emph{Scipy Documentation}, [Online]. Available: \url{https://docs.scipy.org/doc/scipy/index.html}.
-
-\bibitem{smp_materials}
-Prof. Dr. Harald Elders-Boll, Prof. Dr. Christoph Pörschmann, Prof. Dr. Uwe Dettmar, \emph{Lecture and laboratory materials for the module SMP}.
+SciPy Developers, \emph{Scipy Documentation}. \url{https://docs.scipy.org/doc/scipy/index.html}
 
 \bibitem{torchaudio}
-Torchaudio developers, \emph{Hybrid Demucs Tutorial}, [Online]. Available: \url{https://docs.pytorch.org/audio/2.8/tutorials/hybrid_demucs_tutorial.html}.
+Torchaudio Developers, \emph{Hybrid Demucs Tutorial}. \url{https://docs.pytorch.org/audio/2.8/tutorials/hybrid_demucs_tutorial.html}
 
 \bibitem{mido}
-MIDO developers, \emph{MIDO Documentation}, [Online]. Available: \url{https://mido.readthedocs.io/en/stable/#}.
+Mido Developers, \emph{Mido Documentation}. \url{https://mido.readthedocs.io/en/stable/}
 
 \end{thebibliography}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}
+    \centering
+    \Huge Thank you for your attention
+\end{frame}
 
 \end{document}
