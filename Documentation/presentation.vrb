@@ -1,0 +1,19 @@
+\frametitle{Peak Picking Implementation}
+\begin{lstlisting}
+def find_peaks(self, window_size, wait):
+    thresholds = self.calculate_adaptive_threshold(window_size)
+    found_peaks = []
+    last_peak_index = -wait
+
+    for i in range(1, len(self.flux) - 1):
+        current_val = self.flux[i]
+
+        if current_val > thresholds[i]:
+            if current_val > self.flux[i-1] and current_val > self.flux[i+1]:
+                if (i - last_peak_index) > wait:
+                    found_peaks.append(i)
+                    last_peak_index = i
+
+    self.onsets = np.array(found_peaks)
+    return self.onsets
+\end{lstlisting}

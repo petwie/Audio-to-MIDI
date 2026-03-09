@@ -8,9 +8,9 @@
 \contentsline {section}{\numberline {3}Audio Import}{8}{section.3}%
 \contentsline {subsection}{\numberline {3.1}Loading Audio Data}{8}{subsection.3.1}%
 \contentsline {subsection}{\numberline {3.2}Noise Gate}{8}{subsection.3.2}%
-\contentsline {section}{\numberline {4}FFT Analyse}{8}{section.4}%
-\contentsline {subsection}{\numberline {4.1}FFT Algorithm}{8}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}Windowing}{9}{subsection.4.2}%
+\contentsline {section}{\numberline {4}FFT Analyse}{9}{section.4}%
+\contentsline {subsection}{\numberline {4.1}FFT Algorithm}{9}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Windowing}{10}{subsection.4.2}%
 \contentsline {section}{\numberline {5}FLUX Detection}{10}{section.5}%
 \contentsline {subsection}{\numberline {5.1}Calculation of Logarithmic Magnitude Spectrum}{10}{subsection.5.1}%
 \contentsline {subsection}{\numberline {5.2}Calculation of Spectral Flux}{10}{subsection.5.2}%
@@ -18,9 +18,9 @@
 \contentsline {section}{\numberline {6}Onset Detection}{13}{section.6}%
 \contentsline {subsection}{\numberline {6.1}Adaptive Threshold and offset}{14}{subsection.6.1}%
 \contentsline {subsection}{\numberline {6.2}Identification of Peaks (Peak Picking)}{16}{subsection.6.2}%
-\contentsline {subsection}{\numberline {6.3}Practical Application}{16}{subsection.6.3}%
-\contentsline {section}{\numberline {7}MIDI Export}{17}{section.7}%
-\contentsline {subsection}{\numberline {7.1}Library and Input Parameters}{17}{subsection.7.1}%
-\contentsline {subsection}{\numberline {7.2}Output Configuration}{17}{subsection.7.2}%
-\contentsline {section}{\numberline {8}Conclusion and Outlook}{18}{section.8}%
-\contentsline {section}{\numberline {9}References}{18}{section.9}%
+\contentsline {subsection}{\numberline {6.3}Practical Application}{17}{subsection.6.3}%
+\contentsline {section}{\numberline {7}MIDI Export}{18}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Library and Input Parameters}{18}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Output Configuration}{18}{subsection.7.2}%
+\contentsline {section}{\numberline {8}Conclusion and Outlook}{19}{section.8}%
+\contentsline {section}{\numberline {9}References}{19}{section.9}%

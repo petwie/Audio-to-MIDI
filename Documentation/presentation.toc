@@ -1,0 +1,9 @@
+\babel@toc {english}{}\relax 
+\beamer@sectionintoc {1}{Introduction}{3}{0}{1}
+\beamer@sectionintoc {2}{Architecture}{5}{0}{2}
+\beamer@sectionintoc {3}{Audio Preprocessing}{7}{0}{3}
+\beamer@sectionintoc {4}{STFT and Time-Frequency Analysis}{8}{0}{4}
+\beamer@sectionintoc {5}{Spectral Flux and Onset Detection}{10}{0}{5}
+\beamer@sectionintoc {6}{Peak Picking}{13}{0}{6}
+\beamer@sectionintoc {7}{MIDI Export}{16}{0}{7}
+\beamer@sectionintoc {8}{Conclusion}{17}{0}{8}

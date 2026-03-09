@@ -5,39 +5,65 @@
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
 \babel@aux{english}{}
+\citation{librosa}
+\citation{numpy}
+\citation{matplotlib}
+\citation{mido}
+\citation{torchaudio}
+\citation{pytorch}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Project Description}{3}{section.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Goal and Motivation}{3}{subsection.1.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Software and Libraries}{3}{subsection.1.2}\protected@file@percent }
+\citation{rebeat}
 \@writefile{toc}{\contentsline {section}{\numberline {2}Software Architecture}{5}{section.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Signal Processing Pipeline}{5}{subsection.2.1}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Flowchart of the complete Audio-to-MIDI Signal Pipeline.}}{5}{figure.1}\protected@file@percent }
 \newlabel{fig:pipeline_flowchart}{{1}{5}{Flowchart of the complete Audio-to-MIDI Signal Pipeline}{figure.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Object-Oriented Design of the Core Algorithm}{5}{subsection.2.2}\protected@file@percent }
+\citation{librosa}
+\citation{scipy}
+\citation{mido}
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Class diagram of the Audio-to-MIDI object-oriented architecture.}}{6}{figure.2}\protected@file@percent }
 \newlabel{fig:class_diagram}{{2}{6}{Class diagram of the Audio-to-MIDI object-oriented architecture}{figure.2}{}}
+\citation{librosa}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Audio Import}{8}{section.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Waveforms of the different isolations states.}}{8}{figure.3}\protected@file@percent }
+\newlabel{fig:import_waveforms}{{3}{8}{Waveforms of the different isolations states}{figure.3}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Loading Audio Data}{8}{subsection.3.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Noise Gate}{8}{subsection.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}FFT Analyse}{8}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}FFT Algorithm}{8}{subsection.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Windowing}{9}{subsection.4.2}\protected@file@percent }
+\citation{numpy}
+\citation{numpy}
+\@writefile{toc}{\contentsline {section}{\numberline {4}FFT Analyse}{9}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}FFT Algorithm}{9}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Windowing}{10}{subsection.4.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {5}FLUX Detection}{10}{section.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Calculation of Logarithmic Magnitude Spectrum}{10}{subsection.5.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Calculation of Spectral Flux}{10}{subsection.5.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Visualization of the spectral flux calculation.}}{11}{figure.3}\protected@file@percent }
-\newlabel{fig:spectral_flux}{{3}{11}{Visualization of the spectral flux calculation}{figure.3}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Half-Wave Rectification}{11}{subsection.5.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Visualization of the positive spectral flux (half-wave rectification).}}{12}{figure.4}\protected@file@percent }
-\newlabel{fig:positive_spectral_flux}{{4}{12}{Visualization of the positive spectral flux (half-wave rectification)}{figure.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Visualization of the spectral flux calculation.}}{12}{figure.4}\protected@file@percent }
+\newlabel{fig:spectral_flux}{{4}{12}{Visualization of the spectral flux calculation}{figure.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Visualization of the positive spectral flux (half-wave rectification).}}{13}{figure.5}\protected@file@percent }
+\newlabel{fig:positive_spectral_flux}{{5}{13}{Visualization of the positive spectral flux (half-wave rectification)}{figure.5}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {6}Onset Detection}{13}{section.6}\protected@file@percent }
+\citation{numpy}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Adaptive Threshold and offset}{14}{subsection.6.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Identification of Peaks (Peak Picking)}{16}{subsection.6.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Practical Application}{16}{subsection.6.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Visualization of the peak picking algorithm with adaptive threshold.}}{17}{figure.5}\protected@file@percent }
-\newlabel{fig:peak_picking}{{5}{17}{Visualization of the peak picking algorithm with adaptive threshold}{figure.5}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}MIDI Export}{17}{section.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Library and Input Parameters}{17}{subsection.7.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Output Configuration}{17}{subsection.7.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {8}Conclusion and Outlook}{18}{section.8}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {9}References}{18}{section.9}\protected@file@percent }
-\gdef \@abspage@last{18}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Visualization of the peak picking algorithm.}}{17}{figure.6}\protected@file@percent }
+\newlabel{fig:peak_picking}{{6}{17}{Visualization of the peak picking algorithm}{figure.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Practical Application}{17}{subsection.6.3}\protected@file@percent }
+\citation{mido}
+\@writefile{toc}{\contentsline {section}{\numberline {7}MIDI Export}{18}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Library and Input Parameters}{18}{subsection.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Output Configuration}{18}{subsection.7.2}\protected@file@percent }
+\bibcite{librosa}{1}
+\bibcite{matplotlib}{2}
+\bibcite{numpy}{3}
+\bibcite{pytorch}{4}
+\bibcite{rebeat}{5}
+\bibcite{scipy}{6}
+\bibcite{smp_materials}{7}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Conclusion and Outlook}{19}{section.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9}References}{19}{section.9}\protected@file@percent }
+\bibcite{torchaudio}{8}
+\bibcite{mido}{9}
+\gdef \@abspage@last{20}
