@@ -17,9 +17,9 @@ def main():
 
     
     audio_to_midi = AudioToMidi.AudioToMidi(
-        "./tests/drums_kick.wav",
-        "./tests/drums_snare.wav",
-        "./tests/drums_hh.wav"
+        "../tests/drums_kick.wav",
+        "../tests/drums_snare.wav",
+        "../tests/drums_hh.wav"
     )
     audio_to_midi.runfile()
     
