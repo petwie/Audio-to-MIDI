@@ -49,15 +49,15 @@ To achieve the complex task of audio separation and analysis, a combination of m
 The software development for this project was conducted using \textbf{Visual Studio Code (VS Code)} as the primary Integrated Development Environment (IDE).\\
 For the core algorithmic pipeline (Audio-to-MIDI translation), the following Python libraries were implemented:
 \begin{itemize}
-    \item \textbf{Librosa:} Used for loading the audio files, preprocessing, and calculating the Short-Time Fourier Transform (STFT).\cite{librosa}
-    \item \textbf{NumPy:} Essential for handling all multidimensional arrays and performing the mathematical calculations required for the spectral flux and adaptive peak picking.\cite{numpy}
-    \item \textbf{Matplotlib:} Utilized for the visual evaluation of the algorithms, allowing the plotting of spectrograms, spectral flux curves, and the detected peak onsets.\cite{matplotlib}
-    \item \textbf{Mido:} A library dedicated to MIDI handling. It translates the algorithmically determined temporal events (in seconds or frames) into standard MIDI messages (ticks, Note On/Off) and exports the multi-track \texttt{.mid} file.\cite{mido}
+    \item \textbf{Librosa:} Used for loading the audio files, preprocessing, and calculating the Short-Time Fourier Transform (STFT).
+    \item \textbf{NumPy:} Essential for handling all multidimensional arrays and performing the mathematical calculations required for the spectral flux and adaptive peak picking.
+    \item \textbf{Matplotlib:} Utilized for the visual evaluation of the algorithms, allowing the plotting of spectrograms, spectral flux curves, and the detected peak onsets.
+    \item \textbf{Mido:} A library dedicated to MIDI handling. It translates the algorithmically determined temporal events (in seconds or frames) into standard MIDI messages (ticks, Note On/Off) and exports the multi-track \texttt{.mid} file.
 \end{itemize}
 
 \begin{itemize}
-    \item \textbf{Deep Learning Source Separation (PyTorch \& TorchAudio):} To isolate the complete drum stem from a full, mixed song, a pre-trained neural network was utilized. Specifically, the project uses the \texttt{HDEMUCS\_HIGH\_MUSDB\_PLUS}\cite{torchaudio} model provided by the \texttt{torchaudio.pipelines}\cite{pytorch} module. This model separates the audio into discrete stems (vocals, drums, bass, other) using PyTorch for tensor operations and GPU acceleration when available.
-    \item \textbf{Individual Drum Extraction:} After isolating the overall drum stem, the tool \textbf{Rebeat} \cite{rebeat} was used to further separate this stem into the individual percussive components (kick, snare, and hi-hat).
+    \item \textbf{Deep Learning Source Separation (PyTorch \& TorchAudio):} To isolate the complete drum stem from a full, mixed song, a pre-trained neural network was utilized. Specifically, the project uses the \texttt{HDEMUCS\_HIGH\_MUSDB\_PLUS} model provided by the \texttt{torchaudio.pipelines} module. This model separates the audio into discrete stems (vocals, drums, bass, other) using PyTorch for tensor operations and GPU acceleration when available.
+    \item \textbf{Individual Drum Extraction:} After isolating the overall drum stem, the tool \textbf{Rebeat} (\url{https://rebeatapp.com/}) was used to further separate this stem into the individual percussive components (kick, snare, and hi-hat).
 \end{itemize}
 \newpage
 
@@ -136,7 +136,7 @@ The following section details the modular structure of the Python files and the 
     
     \item[\texttt{AudioToMidi.py}:] This file contains the \texttt{AudioToMidi} class, which acts as the central orchestrator of the workflow. It creates instances of the other processing classes and controls the sequential execution for each instrument.
     
-    \item[\texttt{LoadAudioFile.py}:] The \texttt{LoadAudioFile} class encapsulates the reading of audio data using the \texttt{librosa}\cite{librosa} library. The resulting audio array and the sampling rate are stored directly within the object as its state. Additionally, the class contains custom methods for preprocessing steps, such as an implemented noise gate.
+    \item[\texttt{LoadAudioFile.py}:] The \texttt{LoadAudioFile} class encapsulates the reading of audio data using the \texttt{librosa} library. The resulting audio array and the sampling rate are stored directly within the object as its state. Additionally, the class contains custom methods for preprocessing steps, such as an implemented noise gate.
     
     \item[\texttt{LoadSTFT.py}:] This class is responsible for calculating the Short-Time Fourier Transform (STFT). The class stores the calculated spectrogram as an attribute and provides methods for direct visualization.
     
@@ -144,30 +144,24 @@ The following section details the modular structure of the Python files and the 
     
     \item[\texttt{PeakPicking.py}:] The logic for the actual beat detection is isolated within the \texttt{PeakPicking} class. It internally calculates an adaptive threshold using convolution (moving average) over the spectral flux and accounts for debouncing parameters. The finally detected onset frames are stored as an object attribute.
     
-    \item[\texttt{Filtering.py}:] The \texttt{Filtering} class manages various elliptical bandpass filters for the specific frequency ranges of the kick, snare, and hi-hat. It utilizes \texttt{scipy.signal}\cite{scipy} and keeps the filter states ready as instance variables for subsequent filtering processes.
+    \item[\texttt{Filtering.py}:] The \texttt{Filtering} class manages various elliptical bandpass filters for the specific frequency ranges of the kick, snare, and hi-hat. It utilizes \texttt{scipy.signal} and keeps the filter states ready as instance variables for subsequent filtering processes.
     
-    \item[\texttt{MidiExport.py}:] The final step of the pipeline is encapsulated in the \texttt{MidiExport} class, which handles the conversion of the detected frames into a MIDI file using the \texttt{mido}\cite{mido} library. It takes care of converting frames to seconds and then to MIDI ticks, generates individual tracks for each instrument, and bundles them on the standard MIDI drum channel.
+    \item[\texttt{MidiExport.py}:] The final step of the pipeline is encapsulated in the \texttt{MidiExport} class, which handles the conversion of the detected frames into a MIDI file using the \texttt{mido} library. It takes care of converting frames to seconds and then to MIDI ticks, generates individual tracks for each instrument, and bundles them on the standard MIDI drum channel.
 \end{description}
 
 \newpage
 \section{Audio Import}
 The first step in the pipeline is loading and preprocessing the audio files.
-\begin{figure}[htpb]
-    \centering
-    \includegraphics[width=1\textwidth]{IsolatedAudio.png}
-    \caption{Waveforms of the different isolations states.}
-    \label{fig:import_waveforms}
-\end{figure}
 
 \subsection{Loading Audio Data}
-The Python library \texttt{librosa} is used for the actual loading of the audio data. The \texttt{load\_audio}\cite{librosa} method reads the specified file, converts it to a mono signal by default, and uses a target sample rate of 44100 Hz. 
+The Python library \texttt{librosa} is used for the actual loading of the audio data. The \texttt{load\_audio} method reads the specified file, converts it to a mono signal by default, and uses a target sample rate of 44100 Hz. 
 
 \subsection{Noise Gate}
 After the signal has been successfully loaded, noise reduction is applied to remove background noise in quiet passages. This is realized by the \texttt{noise\_gate} method, which cuts off all values below a certain threshold and sets them to 0. The noise gate threshold is calculated dynamically using percentiles.
 \begin{enumerate}
     \item To obtain an envelope of the signal, the absolute values of the array are first computed: $\text{env} = |\text{self.audio\_array}|$.
-    \item The threshold is then defined as the 90th percentile of this envelope using the \texttt{np.percentile(env, 90)} function\cite{numpy}. This means the threshold is set so that 90\% of the signal's amplitude values fall below it, effectively isolating the loudest 10\% of the audio (the actual drum hits).
-    \item Finally, using the \texttt{np.where} function\cite{numpy}, all signal components whose absolute magnitude is smaller than this calculated threshold are filtered out and overwritten with zero. 
+    \item The threshold is then defined as the 90th percentile of this envelope using the \texttt{np.percentile(env, 90)} function. This means the threshold is set so that 90\% of the signal's amplitude values fall below it, effectively isolating the loudest 10\% of the audio (the actual drum hits).
+    \item Finally, using the \texttt{np.where} function, all signal components whose absolute magnitude is smaller than this calculated threshold are filtered out and overwritten with zero. 
 \end{enumerate}
 
 \section{FFT Analyse}
@@ -179,45 +173,51 @@ After the signal has been successfully loaded, noise reduction is applied to rem
             X(k) = \sum_{n=0}^{N-1} x(n) e^{-j2\pi kn/N}
         \end{equation}
         For every frequency bin $k$, the DFT computes a complex number $X(k)$ that represents the amplitude and phase of the corresponding frequency component in the input signal.
-        To calculate $N$ coefficients, $O(N^2)$ operations are required. This is because for each of the N output values, a sum of N terms must be computed. 
+        To calculate $N$ coefficients, $O(N^2)$ operations are required. This is because each of the 
+        N output coefficients requires the computation of a sum containing N terms.
 
-        The FFT algorithm separates the DFT into smaller DFTs, by recursively dividing the input sequence into even and odd indexed elements.
+        \noindent The FFT algorithm separates the DFT into smaller DFTs, by recursively dividing the input sequence into even and odd indexed elements.
 
         \begin{equation}
             X(k) = \sum_{n=0}^{N/2-1} x(2n) e^{-j2\pi k(2n)/N} + \sum_{n=0}^{N/2-1} x(2n+1) e^{-j2\pi k(2n+1)/N}
         \end{equation}
 
-        For better understanding, the even and odd indexed elements can be represented as, by using the substitution:
+        \noindent For better understanding, the even and odd indexed elements can be represented as, by using the substitution:
 
         \begin{equation}
             X_{even}(k) = \sum_{n=0}^{N/2-1} x(2n) e^{-j2\pi kn/(N/2)}
-        \end{equation}
-
-        and 
-
-        \begin{equation}
+            .
             X_{odd}(k) = \sum_{n=0}^{N/2-1} x(2n+1) e^{-j2\pi kn/(N/2)}
+
         \end{equation}
+
+        \noindent to get the following expression for the DFT coefficients:
     
         \begin{equation}
             X(k) = X_{even}(k) + e^{-j2\pi k/N} X_{odd}(k)
         \end{equation}
 
-        Because of the periodicity of the complex exponential function, two different values of $k$ can be calculated by:
+        \noindent Because of the periodicity properties of the complex exponential function, the second half of the spectrum can be derived directly from the same intermediate results. 
+        By substituting $k + N/2$ into the exponential term, the following relation is obtained:
+
+        \begin{align}
+            e^{-j2\pi (k+N/2)/N}
+            &= e^{-j2\pi k/N} \, e^{-j2\pi (N/2)/N} \\
+            &= e^{-j2\pi k/N} \, e^{-j\pi} \\
+            &= -e^{-j2\pi k/N}
+            \end{align}
+        \noindent This sign change leads to a second expression for the Fourier coefficients:
 
         \begin{equation}
             X(k + N/2) = X_{even}(k) - e^{-j2\pi k/N} X_{odd}(k)
-        \end{equation}
-
-        And
-
-        \begin{equation}
+            ,
             X(k) = X_{even}(k) + e^{-j2\pi k/N} X_{odd}(k)
         \end{equation}
+        
+        \noindent By recursively applying this decomposition, the DFT can be computed in \( O(N \log N) \) time,
+        which is a significant improvement over the naive \( O(N^2) \) approach.
 
-        By splitting the DFT into two smaller DFTs, the number of operations is reduced to $O(N \log N)$, which makes the FFT algorithm much more efficient for large input sizes.
-
-     \subsection{Windowing}
+    \subsection{Windowing}
         To generate the spectrogram, the input signal is divided into overlapping frames, and a window function is applied to each frame to minimize spectral leakage.
         Common window functions include Hanning, Hamming, and Blackman windows.
         
@@ -302,14 +302,14 @@ After the signal has been successfully loaded, noise reduction is applied to rem
             8 & 5 & 9
             \end{bmatrix}^T
             \]
-
+        The Code to calculate the spectral flux from the differences is as follows:
         \begin{figure}[htpb]
             \centering
             \includegraphics[width=0.8\textwidth]{spectral_flux.png}
             \caption{Visualization of the spectral flux calculation.}
             \label{fig:spectral_flux}
         \end{figure}
-        The Code to calculate the spectral flux from the differences is as follows:
+
         \small
 \begin{lstlisting}
 flux = np.sum((calculated_FLUX[:, 1:] - calculated_FLUX[:, :-1]))   
@@ -352,7 +352,8 @@ flux = np.sum((calculated_FLUX[:, 1:] - calculated_FLUX[:, :-1]))
             \caption{Visualization of the positive spectral flux (half-wave rectification).}
             \label{fig:positive_spectral_flux}
         \end{figure}
-\newpage
+
+        \newpage
 \section{Onset Detection}
     Onset detection is an essential processing step within the pipeline. The goal of this procedure is to identify the exact timings (onsets) of musical events. In the case of drum detection, drum hits are identified, from a novelty function, which is the calculated positive spectral flux.\\
     Consequently, a peak is only registered if three criteria are met simultaneously:
@@ -382,7 +383,7 @@ The filter kernel $h[n]$ is a rectangular window of length $N$, where all values
     \end{cases}
 \end{equation}\\
 Through this convolution operation, short-term noise is suppressed and the fundamental dynamic envelope (the trend) of the signal is extracted, onto which the offset for the final threshold is subsequently added.
-To prevent background noise (noise floor) from being falsely detected as a peak, an offset (delta) is added to this average. This offset can be static or dynamically adapt to signal blocks.\newline In the present implementation, the moving average is realized by a mathematical convolution (\texttt{np.convolve})\cite{numpy} of the flux with a uniformly distributed kernel. The offset is calculated and added block-wise:
+To prevent background noise (noise floor) from being falsely detected as a peak, an offset (delta) is added to this average. This offset can be static or dynamically adapt to signal blocks.\newline In the present implementation, the moving average is realized by a mathematical convolution (\texttt{np.convolve}) of the flux with a uniformly distributed kernel. The offset is calculated and added block-wise:
 
 \begin{lstlisting}
 def calculate_adaptive_threshold(self, window_size):
@@ -437,24 +438,24 @@ def find_peaks(self, window_size, wait):
     
     self.onsets = np.array(found_peaks)
     return self.onsets
-\end{lstlisting}
+    \end{lstlisting}
 
-\begin{figure}[htpb]
+    \begin{figure}[htpb]
         \centering
-        \includegraphics[width=1\textwidth]{peak_picking.png}
-        \caption{Visualization of the peak picking algorithm.}
+        \includegraphics[width=0.8\textwidth]{peak_picking.png}
+        \caption{Visualization of the peak picking algorithm with adaptive threshold.}
         \label{fig:peak_picking}
     \end{figure}
-    \newpage
-    \subsection{Practical Application}
-    The parameters for window size (\texttt{window\_size}) and waiting time (\texttt{wait}) depend heavily on the characteristics of the signal to be analyzed. For percussive, low-frequency instruments like a kick drum, different parameters are often chosen compared to high-frequency, fast instruments like a hi-hat.
+
+                        \subsection{Practical Application}
+                        The parameters for window size (\texttt{window\_size}) and waiting time (\texttt{wait}) depend heavily on the characteristics of the signal to be analyzed. For percussive, low-frequency instruments like a kick drum, different parameters are often chosen compared to high-frequency, fast instruments like a hi-hat.
 \newpage
 
 \section{MIDI Export}
 The final step in the pipeline is the translation of the detected onset times into a standard musical format (MIDI).
 
 \subsection{Library and Input Parameters}
-To construct and write the MIDI files, the Python library \texttt{mido} \cite{mido}is used. Generating an accurate MIDI sequence requires translating the algorithmic time units (FFT frames) back into absolute real-time units (seconds) and eventually into MIDI ticks.\\
+To construct and write the MIDI files, the Python library \texttt{mido} is used. Generating an accurate MIDI sequence requires translating the algorithmic time units (FFT frames) back into absolute real-time units (seconds) and eventually into MIDI ticks.\\
 Therefore, the export function requires the following parameters from the preceding signal processing stages:
 \begin{itemize}
     \item \textbf{Onset Frames:} The arrays containing the identified frame indices for each instrument (\texttt{kick\_frames}, \texttt{snare\_frames}, \texttt{hihat\_frames}).
@@ -489,35 +490,5 @@ Nevertheless, this separation was still not perfect. Even after the AI-based pro
 \noindent
 Overall, the developed system is capable of generating usable MIDI drum patterns from audio material. At the same time, the results show that perfect separation and detection remain challenging. Future improvements could be achieved through more advanced separation models or more robust detection methods.
 \section{References}
-\begin{thebibliography}{99}
-
-\bibitem{librosa}
-Librosa Developers, \emph{Librosa documentation}, [Online]. Available: \url{https://librosa.org/doc/main/index.html}.
-
-\bibitem{matplotlib}
-Matplotlib Developers, \emph{Matplotlib Documentation}, [Online]. Available: \url{https://matplotlib.org/}.
-
-\bibitem{numpy}
-NumPy Developers, \emph{NumPy Documentation}, [Online]. Available: \url{https://numpy.org/devdocs/index.html}.
-
-\bibitem{pytorch}
-PyTorch Developers, \emph{PyTorch Documentation}, [Online]. Available: \url{https://pytorch.org/}.
-
-\bibitem{rebeat}
-Rebeat Developers, \emph{Rebeat App and documentation}, [Online]. Available: \url{https://rebeatapp.com/}.
-
-\bibitem{scipy}
-SciPy Developers, \emph{Scipy Documentation}, [Online]. Available: \url{https://docs.scipy.org/doc/scipy/index.html}.
-
-\bibitem{smp_materials}
-Prof. Dr. Harald Elders-Boll, Prof. Dr. Christoph Pörschmann, Prof. Dr. Uwe Dettmar, \emph{Lecture and laboratory materials for the module SMP}.
-
-\bibitem{torchaudio}
-Torchaudio developers, \emph{Hybrid Demucs Tutorial}, [Online]. Available: \url{https://docs.pytorch.org/audio/2.8/tutorials/hybrid_demucs_tutorial.html}.
-
-\bibitem{mido}
-MIDO developers, \emph{MIDO Documentation}, [Online]. Available: \url{https://mido.readthedocs.io/en/stable/#}.
-
-\end{thebibliography}
 
 \end{document}
