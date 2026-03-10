@@ -181,13 +181,13 @@ After the signal has been successfully loaded, noise reduction is applied to rem
         For every frequency bin $k$, the DFT computes a complex number $X(k)$ that represents the amplitude and phase of the corresponding frequency component in the input signal.
         To calculate $N$ coefficients, $O(N^2)$ operations are required. This is because for each of the N output values, a sum of N terms must be computed. 
 
-        The FFT algorithm separates the DFT into smaller DFTs, by recursively dividing the input sequence into even and odd indexed elements.
+        \noindent The FFT algorithm separates the DFT into smaller DFTs, by recursively dividing the input sequence into even and odd indexed elements.
 
         \begin{equation}
             X(k) = \sum_{n=0}^{N/2-1} x(2n) e^{-j2\pi k(2n)/N} + \sum_{n=0}^{N/2-1} x(2n+1) e^{-j2\pi k(2n+1)/N}
         \end{equation}
 
-        For better understanding, the even and odd indexed elements can be represented as, by using the substitution:
+        \noindent For better understanding, the even and odd indexed elements can be represented as, by using the substitution:
 
         \begin{equation}
             X_{even}(k) = \sum_{n=0}^{N/2-1} x(2n) e^{-j2\pi kn/(N/2)}
@@ -195,19 +195,19 @@ After the signal has been successfully loaded, noise reduction is applied to rem
             X_{odd}(k) = \sum_{n=0}^{N/2-1} x(2n+1) e^{-j2\pi kn/(N/2)}
         \end{equation}
     
-        \begin{equation}
-            X(k) = X_{even}(k) + e^{-j2\pi k/N} X_{odd}(k)
-        \end{equation}
+        \begin{align}
+            X(k) &= X_{\mathrm{even}}(k) + e^{-j\frac{2\pi k}{N}}X_{\mathrm{odd}}(k), \\
+            X\left(k+\frac{N}{2}\right)
+            &= X_{\mathrm{even}}(k)
+               + e^{-j\frac{2\pi}{N}\left(k+\frac{N}{2}\right)}X_{\mathrm{odd}}(k) \\
+            &= X_{\mathrm{even}}(k)
+               + e^{-j\frac{2\pi k}{N}}e^{-j\pi}X_{\mathrm{odd}}(k) \\
+            &= X_{\mathrm{even}}(k)
+               - e^{-j\frac{2\pi k}{N}}X_{\mathrm{odd}}(k),
+            \qquad k=0,\dots,\frac{N}{2}-1.
+            \end{align}
 
-        Because of the periodicity of the complex exponential function, two different values of $k$ can be calculated by:
-
-        \begin{equation}
-            X(k + N/2) = X_{even}(k) - e^{-j2\pi k/N} X_{odd}(k)
-            ,
-            X(k) = X_{even}(k) + e^{-j2\pi k/N} X_{odd}(k)
-        \end{equation}
-
-        By  recursively splitting the DFT into two smaller DFTs, the number of operations is reduced to $O(N \log N)$, which makes the FFT algorithm much more efficient for large input sizes.
+        \noindent By  recursively splitting the DFT into two smaller DFTs, the number of operations is reduced to $O(N \log N)$, which makes the FFT algorithm much more efficient for large input sizes.
 
      \subsection{Windowing}
         To generate the spectrogram, the input signal is divided into overlapping frames, and a window function is applied to each frame to minimize spectral leakage.
