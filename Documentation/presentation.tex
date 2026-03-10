@@ -108,13 +108,13 @@
     arrow/.style={-{Stealth[scale=1.0]}, thick}
 ]
 
-\node[io] (input) {Original Audio Mix};
+\node[io] (input) {Original\\Audio Mix};
 \node[process, below=of input] (demucs) {Deep Learning Separation\\(HDEMUCS)};
 \node[io, below=of demucs] (drumstem) {Drum Stem};
 \node[process, below=of drumstem] (rebeat) {Rebeat\\Separation};
 \node[io, below=of rebeat] (elements) {Kick / Snare / Hi-Hat};
 
-\node[algorithm, right=1.6cm of input] (import) {1. Audio Import\\\& Noise Gate};
+\node[algorithm, right=4cm of input] (import) {1. Audio Import\\\& Noise Gate};
 \node[algorithm, below=of import] (stft) {2. STFT};
 \node[algorithm, below=of stft] (flux) {3. Spectral Flux};
 \node[algorithm, below=of flux] (peaks) {4. Peak Picking};
@@ -126,7 +126,7 @@
 \draw[arrow] (drumstem) -- (rebeat);
 \draw[arrow] (rebeat) -- (elements);
 
-\draw[arrow, blue] (elements.east) -- ++(0.5,0) |- (import.west);
+\draw[arrow, blue] (elements.east) -- ++(2,0) |- (import.west);
 
 \draw[arrow] (import) -- (stft);
 \draw[arrow] (stft) -- (flux);
@@ -162,10 +162,9 @@
             \end{itemize}
         \end{column}
         \begin{column}{0.48\textwidth}
-            \centering
-            \includegraphics[width=\textwidth]{class_diagram.png}
         \end{column}
     \end{columns}
+    
 \end{frame}
 
 %------------------------------------------------
@@ -180,7 +179,8 @@
                 \item A \textbf{noise gate} suppresses low-amplitude noise
                 \item Threshold based on the \textbf{90th percentile} of the envelope
             \end{itemize}
-
+        \end{column}
+        \begin{column}{0.48\textwidth}
             \[
             \text{env} = |\text{audio}|
             \qquad
@@ -195,11 +195,10 @@
             \end{cases}
             \]
         \end{column}
-        \begin{column}{0.48\textwidth}
-            \centering
-            \includegraphics[width=\textwidth]{IsolatedAudio.png}
-        \end{column}
     \end{columns}
+
+    \centering
+    \includegraphics[width=0.7\textwidth]{IsolatedAudio.png}
 \end{frame}
 
 %------------------------------------------------
@@ -218,23 +217,8 @@
     \end{itemize}
 
     \[
-    X(k)=\sum_{n=0}^{N-1}x(n)e^{-j2\pi kn/N}
-    \]
-\end{frame}
-
-%------------------------------------------------
-\begin{frame}{STFT: Principle and Spectrogram}
-    \begin{itemize}
-        \item The signal is split into short overlapping time frames.
-        \item Each frame is multiplied by a window function.
-        \item Then an FFT is calculated for every frame.
-        \item The result is a time-frequency representation: the \textbf{spectrogram}.
-    \end{itemize}
-
-    \vspace{0.2cm}
-
-    \[
-    \mathbf{L} =
+    X(k)=\sum_{n=0}^{N-1}x(n)e^{-j2\pi kn/N}\qquad
+    \mathbf{|X_e|} =
     \begin{bmatrix}
         1 & 4 & 1 & 6 \\
         3 & 2 & 2 & 1 \\
@@ -242,11 +226,29 @@
     \end{bmatrix}
     \]
 
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{STFT: Principle and Spectrogram}
+    \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
     \begin{itemize}
+        \item The signal is split into short overlapping time frames.
+        \item Each frame is multiplied by a window function.
+        \item Then an FFT is calculated for every frame.
+    \end{itemize}
+    \end{column}    
+    \begin{column}{0.48\textwidth}
+    \begin{itemize}
+        \item The result is a time-frequency representation: the \textbf{spectrogram}.
         \item Columns represent time frames.
         \item Rows represent frequency bins.
         \item This makes transient drum events visible over time.
     \end{itemize}
+        \end{column}
+    \end{columns}
+    \centering
+    \includegraphics[width=0.45\textwidth]{Spektrogram_House.png}
 \end{frame}
 
 %------------------------------------------------
@@ -385,7 +387,7 @@
 %------------------------------------------------
 \begin{frame}{Peak Picking Visualization}
     \centering
-    \includegraphics[width=0.9\textwidth]{peak_picking.png}
+    \includegraphics[width=0.65\textwidth]{peak_picking.png}
 
     \vspace{0.3cm}
     \begin{itemize}
@@ -395,26 +397,6 @@
 \end{frame}
 
 %------------------------------------------------
-\begin{frame}[fragile]{Peak Picking Implementation}
-\begin{lstlisting}
-def find_peaks(self, window_size, wait):
-    thresholds = self.calculate_adaptive_threshold(window_size)
-    found_peaks = []
-    last_peak_index = -wait
-
-    for i in range(1, len(self.flux) - 1):
-        current_val = self.flux[i]
-
-        if current_val > thresholds[i]:
-            if current_val > self.flux[i-1] and current_val > self.flux[i+1]:
-                if (i - last_peak_index) > wait:
-                    found_peaks.append(i)
-                    last_peak_index = i
-
-    self.onsets = np.array(found_peaks)
-    return self.onsets
-\end{lstlisting}
-\end{frame}
 
 %------------------------------------------------
 \section{MIDI Export}
